@@ -14,9 +14,12 @@ class Controller extends BaseController
 
     public function sendmail()
     {
-        Mail::raw('測試郵件', function ($message) {
-            $message->from('root@bakerychu.com', 'root');
-            $message->to('likeyou600@gmail.com', 'bakery')->subject('網域發信');
-        });
+        // Mail::raw('測試郵件', function ($message) {
+        //     $message->from('root@bakerychu.com', 'root');
+        //     $message->to('likeyou600@gmail.com', 'bakery')->subject('網域發信');
+        // });
+        return response()->json([
+            'message' => 'Successfully logged out'
+        ]);
     }
 }

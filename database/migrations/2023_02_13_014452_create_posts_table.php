@@ -19,8 +19,8 @@ return new class extends Migration
             $table->foreignId('uva_topic_id')->constrained()->onDelete('cascade')->comment('外鍵_題目ID');
             $table->text('video_url');
             $table->text('content');
-            $table->unsignedInteger('likes');
-            $table->unsignedInteger('comments_count');
+            $table->unsignedInteger('likes')->default(0);
+            $table->unsignedInteger('comments_count')->default(0);
             $table->timestamps();
         });
     }

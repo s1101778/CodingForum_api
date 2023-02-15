@@ -17,14 +17,6 @@
     },
     {
         "type": "Directory",
-        "name": "/var/www/CodingForum_api/app/Repositories",
-        "parent_id": null,
-        "workspaceRoot": "/var/www/CodingForum_api",
-        "workspacePath": "app/Repositories",
-        "id": "qZ6EIWHpMKeyCl98"
-    },
-    {
-        "type": "Directory",
         "name": "/var/www/CodingForum_api/database/migrations",
         "parent_id": null,
         "workspaceRoot": "/var/www/CodingForum_api",

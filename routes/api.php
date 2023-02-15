@@ -1,6 +1,8 @@
 <?php
 
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +22,8 @@ php artisan make:migration update_flights_table
 
 php artisan migrate
 php artisan migrate:rollback
+
+php artisan db:seed --class=UvaTopicTableSeeder
 
 php artisan route:list 查看可用
 php artisan queue:clear
@@ -42,7 +46,11 @@ Route::middleware('auth:api')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('user', [AuthController::class, 'userInfo']);
 });
-
+Route::prefix('reset_password')->group(function () {
+    Route::post('send',  [ForgotPasswordController::class, 'send_reset_mail']);
+    Route::post('check',  [ForgotPasswordController::class, 'token_check']);
+    Route::post('reset', [ForgotPasswordController::class, 'check_reset_mail']);
+});
 Route::prefix('test')->group(function () {
     Route::get('test1', [TestController::class, 'test1']);
     Route::get('test2', [TestController::class, 'test2']);
