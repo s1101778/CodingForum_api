@@ -2,13 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Post;
+use App\Models\UserLike;
+
 class TestController extends Controller
 {
 
     public function test1()
     {
-
-        return response()->json(['success' => 'success'], 200);
+        $UserLike = UserLike::where([
+            'user_id' => 1,
+            'post_id' => 1
+        ])->delete();
+        return response()->json(['success' =>  $UserLike], 200);
     }
     public function test2()
     {

@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\PostController;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
@@ -38,19 +38,27 @@ php artisan schedule:list 查看排程
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
-});
-Route::get('sendmail', [Controller::class, 'sendmail']);
 
+    Route::middleware('auth:api')->group(function () {
+        Route::post('logout', [AuthController::class, 'logout']);
+        Route::post('user', [AuthController::class, 'user']);
+    });
+    Route::prefix('reset_password')->group(function () {
+        Route::post('send',  [ForgotPasswordController::class, 'send_reset_mail']);
+        Route::post('check',  [ForgotPasswordController::class, 'token_check']);
+        Route::post('reset', [ForgotPasswordController::class, 'check_reset_mail']);
+    });
+});
+Route::prefix('forum')->group(function () {
+    Route::middleware('auth:api')->group(function () {
+        Route::post('post', [PostController::class, 'post']);
+        Route::post('like_post', [PostController::class, 'like_post']);
+    });
+    Route::post('get_post', [PostController::class, 'get_post']);
+});
 
-Route::middleware('auth:api')->group(function () {
-    Route::post('logout', [AuthController::class, 'logout']);
-    Route::get('user', [AuthController::class, 'userInfo']);
-});
-Route::prefix('reset_password')->group(function () {
-    Route::post('send',  [ForgotPasswordController::class, 'send_reset_mail']);
-    Route::post('check',  [ForgotPasswordController::class, 'token_check']);
-    Route::post('reset', [ForgotPasswordController::class, 'check_reset_mail']);
-});
+Route::get('sendmail', [PostController::class, 'post']);
+
 Route::prefix('test')->group(function () {
     Route::get('test1', [TestController::class, 'test1']);
     Route::get('test2', [TestController::class, 'test2']);
