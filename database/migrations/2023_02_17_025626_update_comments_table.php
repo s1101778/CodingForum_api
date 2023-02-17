@@ -14,9 +14,10 @@ return new class extends Migration
     public function up()
     {
         Schema::table('comments', function (Blueprint $table) {
-            $table->unsignedInteger('likes')->default(0)->after('content');
-            $table->json('mention')->nullable()->after('content')->comment('提及');
-            $table->foreignId('user_id')->after('id')->constrained()->onDelete('cascade')->comment('外鍵_使用者ID');
+            // $table->foreignId('parent_comment_id')->after('content')->nullable()->constrained()->onDelete('cascade')->comment('外鍵_父comment_id');
+
+            $table->unsignedBigInteger('parent_comment_id')->after('id')->nullable();
+            $table->foreign('parent_comment_id')->references('id')->on('comments')->onDelete('cascade')->comment('外鍵_父comment_id');
         });
     }
 
@@ -28,9 +29,7 @@ return new class extends Migration
     public function down()
     {
         Schema::table('comments', function (Blueprint $table) {
-            $table->dropColumn('likes');
-            $table->dropColumn('mention');
-            $table->dropConstrainedForeignId('user_id');
+            $table->dropConstrainedForeignId('parent_comment_id');
         });
     }
 };
