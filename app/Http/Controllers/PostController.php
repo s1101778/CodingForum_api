@@ -15,20 +15,23 @@ class PostController extends Controller
     {
         $validator = Validator::make($data->all(), [
             'serial' => 'required|exists:uva_topics,serial',
-            'video_url' => 'required|url',
+            'video_url' => 'required|active_url',
             'content' => 'required',
         ], [
             'required' => '欄位沒有填寫完整!',
-            'video_url.url' => '請放入影片網址',
+            'video_url.active_url' => '請放入正確的youtube影片網址',
             'serial.exists' => '題目編號不存在',
         ]);
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 401);
         } else {
+            preg_match("#(?<=v=)[a-zA-Z0-9-]+(?=&)|(?<=v\/)[^&\n]+(?=\?)|(?<=v=)[^&\n]+|(?<=youtu.be/)[^&\n]+#", $data->video_url, $matches);
+            $video_id = $matches[0];
             if (Post::find($data->post_id)) { //更新POST
                 Post::find($data->post_id)->update([
                     'uva_topic_id' => UvaTopic::get_uva_topic_id($data->serial),
                     'video_url' => $data->video_url,
+                    'video_id' => $video_id,
                     'content' => $data->content,
                 ]);
                 return response()->json(['success' => '成功更新貼文'], 200);
@@ -37,6 +40,7 @@ class PostController extends Controller
                     'user_id' => Auth::user()->id,
                     'uva_topic_id' => UvaTopic::get_uva_topic_id($data->serial),
                     'video_url' => $data->video_url,
+                    'video_id' => $video_id,
                     'content' => $data->content,
                 ]);
                 return response()->json(['success' => '成功創立貼文'], 200);

@@ -16,8 +16,9 @@ use Illuminate\Support\Facades\Route;
 | routes are loaded by the RouteServiceProvider within a group which
 | is assigned the "api" middleware group. Enjoy building your API!
 |
-
-php artisan passport:install
+1. php artisan migrate
+2. php artisan db:seed --class=UvaTopicTableSeeder
+3. php artisan passport:install
 
 php artisan make:model Name --migration
 
@@ -26,15 +27,14 @@ php artisan make:migration update_flights_table
 php artisan migrate
 php artisan migrate:rollback
 
-php artisan db:seed --class=UvaTopicTableSeeder
 
-php artisan route:list 查看可用
+php artisan route:list 
 php artisan queue:clear
 sudo supervisorctl restart all
 supervisorctl reread
 supervisorctl update
 
-php artisan schedule:list 查看排程
+php artisan schedule:list 
 */
 
 

@@ -36,7 +36,7 @@ class AuthController extends Controller
                 'remember_token' => Str::random(10)
             ]);
             $token = $user->createToken('Laravel9PassportAuth')->accessToken;
-            return response()->json(['token' => $token], 200);
+            return response()->json(['success' => $token], 200);
         }
     }
 
@@ -49,7 +49,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($userdata)) {
             $token = auth()->user()->createToken('Laravel9PassportAuth')->accessToken;
-            return response()->json(['token' => $token], 200);
+            return response()->json(['success' => $token], 200);
         } else {
             return response()->json(['error' => 'Unauthorised'], 401);
         }
