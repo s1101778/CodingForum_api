@@ -26,12 +26,22 @@ class PostController extends Controller
             return response()->json(['error' => $validator->errors()->first()], 401);
         } else {
             preg_match("#(?<=v=)[a-zA-Z0-9-]+(?=&)|(?<=v\/)[^&\n]+(?=\?)|(?<=v=)[^&\n]+|(?<=youtu.be/)[^&\n]+#", $data->video_url, $matches);
+            if (count($matches) == 0) {
+                return response()->json(['error' => '請放入正確的youtube影片網址'], 401);
+            }
             $video_id = $matches[0];
+            $video_pic_url = 'https://img.youtube.com/vi/' . $video_id . '/maxresdefault.jpg';
+            $headers = @get_headers($video_pic_url);
+            if (!$headers || $headers[0] == 'HTTP/1.1 404 Not Found') {
+                $video_pic_url = 'https://img.youtube.com/vi/' . $video_id . '/mqdefault.jpg';
+            }
+
             if (Post::find($data->post_id)) { //更新POST
                 Post::find($data->post_id)->update([
                     'uva_topic_id' => UvaTopic::get_uva_topic_id($data->serial),
                     'video_url' => $data->video_url,
                     'video_id' => $video_id,
+                    'video_pic_url' => $video_pic_url,
                     'content' => $data->content,
                 ]);
                 return response()->json(['success' => '成功更新貼文'], 200);
@@ -41,6 +51,7 @@ class PostController extends Controller
                     'uva_topic_id' => UvaTopic::get_uva_topic_id($data->serial),
                     'video_url' => $data->video_url,
                     'video_id' => $video_id,
+                    'video_pic_url' => $video_pic_url,
                     'content' => $data->content,
                 ]);
                 return response()->json(['success' => '成功創立貼文'], 200);
@@ -112,6 +123,8 @@ class PostController extends Controller
                     'user_name' => $item->User->name,
                     'uva_topic' => $item->UvaTopic,
                     'video_url' => $item['video_url'],
+                    'video_id' => $item['video_id'],
+                    'video_pic_url' => $item['video_pic_url'],
                     'content' => $item['content'],
                     'likes' => $item['likes'],
                     'comments_count' => $item['comments_count'],

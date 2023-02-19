@@ -14,6 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('posts', function (Blueprint $table) {
+            $table->text('video_pic_url')->after('video_url');
             $table->text('video_id')->after('video_url');
         });
     }
@@ -26,6 +27,7 @@ return new class extends Migration
     public function down()
     {
         Schema::table('posts', function (Blueprint $table) {
+            $table->dropColumn('video_pic_url');
             $table->dropColumn('video_id');
         });
     }
