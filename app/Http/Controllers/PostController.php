@@ -109,56 +109,70 @@ class PostController extends Controller
     }
     public function get_post(Request $data)
     {
-        $star = collect(json_decode($data->star, true)); //選幾星
-        $sort = $data->sort; //0 or null新 1舊 2留言多 3留言少 4心多 5心少
-        $page = $data->page;
-        $page = 0;
-        $posts = Post::all();
-
-        $posts = $posts->map(function ($item, $key) use ($star) {
-            if ($star->contains($item->UvaTopic->star) || count($star) == 0) {
-                return collect([
-                    'id' => $item['id'],
-                    'user_id' => $item['user_id'],
-                    'user_name' => $item->User->name,
-                    'uva_topic' => $item->UvaTopic,
-                    'video_url' => $item['video_url'],
-                    'video_id' => $item['video_id'],
-                    'video_pic_url' => $item['video_pic_url'],
-                    'content' => $item['content'],
-                    'likes' => $item['likes'],
-                    'comments_count' => $item['comments_count'],
-                    'created_at' => $item['created_at']->format('Y/m/d H:i:s'),
-                    'updated_at' => $item['updated_at']->format('Y/m/d H:i:s'),
-                ]);
+        $post_id = $data->post_id;
+        if ($post_id != '') {
+            try {
+                $posts = Post::find($post_id);
+                $posts = self::tidy_post($posts);
+            } catch (\Throwable $th) {
+                return response()->json(['success' => '貼文不存在'], 401);
             }
-        });
-        switch ($sort) {
-            case 0:
-                $posts = $posts->sortByDesc('created_at');
-                break;
-            case 1:
-                $posts = $posts->sortBy('created_at');
-                break;
-            case 2:
-                $posts = $posts->sortByDesc('comments_count');
-                break;
-            case 3:
-                $posts = $posts->sortBy('comments_count');
-                break;
-            case 4:
-                $posts = $posts->sortByDesc('likes');
-                break;
-            case 5:
-                $posts = $posts->sortBy('likes');
-                break;
-            default:
-                $posts = $posts->sortByDesc('created_at');
-                break;
-        }
-        $posts = $posts->filter()->values(); //清null
+        } else {
+            $star = collect(json_decode($data->star, true)); //選幾星
+            $sort = $data->sort; //0 or null新 1舊 2留言多 3留言少 4心多 5心少
+            $page = $data->page;
+            $page = 0;
+            $posts = Post::all();
 
-        // $posts = $posts->slice($page * 5, $page + 5)->values();
+            $posts = $posts->map(function ($item, $key) use ($star) {
+                if ($star->contains($item->UvaTopic->star) || count($star) == 0) {
+                    return self::tidy_post($item);
+                }
+            });
+            switch ($sort) {
+                case 0:
+                    $posts = $posts->sortByDesc('created_at');
+                    break;
+                case 1:
+                    $posts = $posts->sortBy('created_at');
+                    break;
+                case 2:
+                    $posts = $posts->sortByDesc('comments_count');
+                    break;
+                case 3:
+                    $posts = $posts->sortBy('comments_count');
+                    break;
+                case 4:
+                    $posts = $posts->sortByDesc('likes');
+                    break;
+                case 5:
+                    $posts = $posts->sortBy('likes');
+                    break;
+                default:
+                    $posts = $posts->sortByDesc('created_at');
+                    break;
+            }
+            $posts = $posts->filter()->values(); //清null
+
+            // $posts = $posts->slice($page * 5, $page + 5)->values();
+        }
         return response()->json(['success' => $posts], 200);
+    }
+    public function tidy_post($item)
+    {
+        return collect([
+            'id' => $item['id'],
+            'user_id' => $item['user_id'],
+            'user_name' => $item->User->name,
+            'uva_topic' => $item->UvaTopic,
+            'video_url' => $item['video_url'],
+            'video_id' => $item['video_id'],
+            'video_pic_url' => $item['video_pic_url'],
+            'content' => $item['content'],
+            'likes' => $item['likes'],
+            'comments_count' => $item['comments_count'],
+            'created_at' => $item['created_at']->format('Y/m/d H:i:s'),
+            'updated_at' => $item['updated_at']->format('Y/m/d H:i:s'),
+        ]);
     }
 }
