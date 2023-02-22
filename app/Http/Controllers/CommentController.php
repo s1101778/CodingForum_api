@@ -37,10 +37,23 @@ class CommentController extends Controller
                 ]);
                 return response()->json(['success' => '成功更新留言'], 200);
             } else {
-                $parent_post_id = Comment::find($data->parent_comment_id)->post_id;
-                if ($parent_post_id == $data->post_id) {
+                if ($data->parent_comment_id) {
+                    $parent_post_id = Comment::find($data->parent_comment_id)->post_id;
+                    if ($parent_post_id == $data->post_id) {
+                        Comment::create([  //添加Comment
+                            'parent_comment_id' => $data->parent_comment_id,
+                            'user_id' => Auth::user()->id,
+                            'post_id' => $data->post_id,
+                            'mention' => $data->mention,
+                            'content' => $data->content,
+                        ]);
+                        Post::find($data->post_id)->increment('comments_count');
+                        return response()->json(['success' => '成功發布留言'], 200);
+                    } else {
+                        return response()->json(['error' => '貼文ID與父Comment不匹配'], 401);
+                    }
+                } else {
                     Comment::create([  //添加Comment
-                        'parent_comment_id' => $data->parent_comment_id,
                         'user_id' => Auth::user()->id,
                         'post_id' => $data->post_id,
                         'mention' => $data->mention,
@@ -48,8 +61,6 @@ class CommentController extends Controller
                     ]);
                     Post::find($data->post_id)->increment('comments_count');
                     return response()->json(['success' => '成功發布留言'], 200);
-                } else {
-                    return response()->json(['error' => '貼文ID與父Comment不匹配'], 401);
                 }
             }
         }
@@ -117,17 +128,23 @@ class CommentController extends Controller
     public function get_comment(Request $data)
     {
         $page = $data->page;
-        $page = 0;
         $post_id = $data->post_id;
-        $comments = Post::find($post_id)->Comment;
+        $comments = Post::find($post_id)->Comment->whereNull('parent_comment_id')->sortByDesc('created_at')->sortByDesc('likes')->forPage($page, 4)->values();
 
         $comments = self::tidy_comment($comments, false);
-        $comments = $comments->sortByDesc('created_at')->sortByDesc('likes');
 
         $comments = $comments->filter()->values(); //清null
-
-        // $comments = $comments->slice($page * 5, $page + 5)->values();
         return response()->json(['success' => $comments], 200);
+    }
+    public function get_more_children_comment(Request $data)
+    {
+        $page = ($data->page) + 1;
+        $comment_id = $data->comment_id;
+        $children_comments = Comment::where('parent_comment_id', $comment_id)->get()->sortByDesc('created_at')->sortByDesc('likes')->forPage($page, 2)->values();
+
+        $children_comments = self::tidy_comment($children_comments, true);
+        $children_comments = $children_comments->filter()->values(); //清null
+        return response()->json(['success' => $children_comments], 200);
     }
     public function tidy_comment($comments, $Children_tidy)
     {
@@ -145,7 +162,7 @@ class CommentController extends Controller
                     'user_name' => $item->User->name,
                     'content' => $item['content'],
                     'likes' => $item['likes'],
-                    'children_comment' => self::tidy_comment(Comment::where('parent_comment_id', $item['id'])->get(), true),
+                    'children_comment' => self::tidy_comment(Comment::where('parent_comment_id', $item['id'])->get()->sortByDesc('created_at')->sortByDesc('likes')->values()->take(2), true),
                     'mention' => $mention,
                     'mention_name' => $mention_name,
                     'created_at' => $item['created_at']->format('Y/m/d H:i:s'),
