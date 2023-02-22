@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Post;
+use App\Models\User;
 use App\Models\UserLike;
 
 class CommentController extends Controller
@@ -120,23 +121,38 @@ class CommentController extends Controller
         $post_id = $data->post_id;
         $comments = Post::find($post_id)->Comment;
 
-        $comments = $comments->map(function ($item, $key) {
-            return collect([
-                'id' => $item['id'],
-                'user_id' => $item['user_id'],
-                'post_id' => $item['post_id'],
-                'user_name' => $item->User->name,
-                'content' => $item['content'],
-                'likes' => $item['likes'],
-                'created_at' => $item['created_at']->format('Y/m/d H:i:s'),
-                'updated_at' => $item['updated_at']->format('Y/m/d H:i:s'),
-            ]);
-        });
+        $comments = self::tidy_comment($comments, false);
         $comments = $comments->sortByDesc('created_at')->sortByDesc('likes');
 
         $comments = $comments->filter()->values(); //清null
 
         // $comments = $comments->slice($page * 5, $page + 5)->values();
         return response()->json(['success' => $comments], 200);
+    }
+    public function tidy_comment($comments, $Children_tidy)
+    {
+        $comments = $comments->map(function ($item, $key) use ($Children_tidy) {
+            if ($item['parent_comment_id'] == '' || $Children_tidy) {
+                $mention = collect(json_decode($item['mention'], true));
+                $mention_name = collect();
+                $mention->map(function ($item, $key) use ($mention_name) {
+                    $mention_name->push(User::find($item)->name);
+                });
+                return collect([
+                    'id' => $item['id'],
+                    'user_id' => $item['user_id'],
+                    'post_id' => $item['post_id'],
+                    'user_name' => $item->User->name,
+                    'content' => $item['content'],
+                    'likes' => $item['likes'],
+                    'children_comment' => self::tidy_comment(Comment::where('parent_comment_id', $item['id'])->get(), true),
+                    'mention' => $mention,
+                    'mention_name' => $mention_name,
+                    'created_at' => $item['created_at']->format('Y/m/d H:i:s'),
+                    'updated_at' => $item['updated_at']->format('Y/m/d H:i:s'),
+                ]);
+            }
+        });
+        return $comments;
     }
 }
