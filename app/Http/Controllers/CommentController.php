@@ -29,31 +29,19 @@ class CommentController extends Controller
         ]);
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 401);
+        }
+        if (Comment::find($data->comment_id)) { //更新Comment
+            Comment::find($data->comment_id)->update([
+                'mention' => $data->mention,
+                'content' => $data->content,
+            ]);
+            return response()->json(['success' => '成功更新留言'], 200);
         } else {
-            if (Comment::find($data->comment_id)) { //更新Comment
-                Comment::find($data->comment_id)->update([
-                    'mention' => $data->mention,
-                    'content' => $data->content,
-                ]);
-                return response()->json(['success' => '成功更新留言'], 200);
-            } else {
-                if ($data->parent_comment_id) {
-                    $parent_post_id = Comment::find($data->parent_comment_id)->post_id;
-                    if ($parent_post_id == $data->post_id) {
-                        Comment::create([  //添加Comment
-                            'parent_comment_id' => $data->parent_comment_id,
-                            'user_id' => Auth::user()->id,
-                            'post_id' => $data->post_id,
-                            'mention' => $data->mention,
-                            'content' => $data->content,
-                        ]);
-                        Post::find($data->post_id)->increment('comments_count');
-                        return response()->json(['success' => '成功發布留言'], 200);
-                    } else {
-                        return response()->json(['error' => '貼文ID與父Comment不匹配'], 401);
-                    }
-                } else {
+            if ($data->parent_comment_id) {
+                $parent_post_id = Comment::find($data->parent_comment_id)->post_id;
+                if ($parent_post_id == $data->post_id) {
                     Comment::create([  //添加Comment
+                        'parent_comment_id' => $data->parent_comment_id,
                         'user_id' => Auth::user()->id,
                         'post_id' => $data->post_id,
                         'mention' => $data->mention,
@@ -61,7 +49,18 @@ class CommentController extends Controller
                     ]);
                     Post::find($data->post_id)->increment('comments_count');
                     return response()->json(['success' => '成功發布留言'], 200);
+                } else {
+                    return response()->json(['error' => '貼文ID與父Comment不匹配'], 401);
                 }
+            } else {
+                Comment::create([  //添加Comment
+                    'user_id' => Auth::user()->id,
+                    'post_id' => $data->post_id,
+                    'mention' => $data->mention,
+                    'content' => $data->content,
+                ]);
+                Post::find($data->post_id)->increment('comments_count');
+                return response()->json(['success' => '成功發布留言'], 200);
             }
         }
     }
@@ -75,29 +74,37 @@ class CommentController extends Controller
         ]);
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 401);
-        } else {
+        }
 
-            $Comment = Comment::where([
-                'user_id' => Auth::user()->id,
-                'id' => $data->comment_id
-            ]);
+        $Comment = Comment::where([
+            'user_id' => Auth::user()->id,
+            'id' => $data->comment_id
+        ]);
 
-            $post_id = $Comment->first()->Post->id;
+        $post_id = $Comment->first()->Post->id;
 
-            $Children_Comment = Comment::where([
-                'parent_comment_id' => $data->comment_id
-            ]);
-            $Children_Comment_count = $Children_Comment->count();
+        $Children_Comment = Comment::where([
+            'parent_comment_id' => $data->comment_id
+        ]);
+        $Children_Comment_count = $Children_Comment->count();
 
-            $Comment = $Comment->delete();
-            if ($Comment == 1) {
-                Post::find($post_id)->decrement('comments_count', 1 + $Children_Comment_count);
-                return response()->json(['success' => '成功刪除留言'], 200);
-            }
+        $Comment = $Comment->delete();
+        if ($Comment == 1) {
+            Post::find($post_id)->decrement('comments_count', 1 + $Children_Comment_count);
+            return response()->json(['success' => '成功刪除留言'], 200);
         }
     }
     public function like_comment(Request $data)
     {
+        $validator = Validator::make($data->all(), [
+            'comment_id' => 'required|exists:comments,id',
+        ], [
+            'required' => '欄位沒有填寫完整!',
+            'comment_id.exists' => '留言不存在',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 401);
+        }
         if (Comment::find($data->comment_id)) {
             $like = $data->like;
             if ($like == 1) {
@@ -127,6 +134,15 @@ class CommentController extends Controller
     }
     public function get_comment(Request $data)
     {
+        $validator = Validator::make($data->all(), [
+            'post_id' => 'required|exists:posts,id',
+        ], [
+            'required' => '欄位沒有填寫完整!',
+            'post_id.exists' => '貼文不存在',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 401);
+        }
         $page = $data->page;
         $post_id = $data->post_id;
         $comments = Post::find($post_id)->Comment->whereNull('parent_comment_id')->sortByDesc('created_at')->sortByDesc('likes')->forPage($page, 4)->values();
@@ -138,6 +154,15 @@ class CommentController extends Controller
     }
     public function get_more_children_comment(Request $data)
     {
+        $validator = Validator::make($data->all(), [
+            'comment_id' => 'required|exists:comments,id',
+        ], [
+            'required' => '欄位沒有填寫完整!',
+            'comment_id.exists' => '留言不存在',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 401);
+        }
         $page = ($data->page) + 1;
         $comment_id = $data->comment_id;
         $children_comments = Comment::where('parent_comment_id', $comment_id)->get()->sortByDesc('created_at')->sortByDesc('likes')->forPage($page, 2)->values();

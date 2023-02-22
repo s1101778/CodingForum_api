@@ -24,38 +24,37 @@ class PostController extends Controller
         ]);
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 401);
-        } else {
-            preg_match("#(?<=v=)[a-zA-Z0-9-]+(?=&)|(?<=v\/)[^&\n]+(?=\?)|(?<=v=)[^&\n]+|(?<=youtu.be/)[^&\n]+#", $data->video_url, $matches);
-            if (count($matches) == 0) {
-                return response()->json(['error' => '請放入正確的youtube影片網址'], 401);
-            }
-            $video_id = $matches[0];
-            $video_pic_url = 'https://img.youtube.com/vi/' . $video_id . '/maxresdefault.jpg';
-            $headers = @get_headers($video_pic_url);
-            if (!$headers || $headers[0] == 'HTTP/1.1 404 Not Found') {
-                $video_pic_url = 'https://img.youtube.com/vi/' . $video_id . '/mqdefault.jpg';
-            }
+        }
+        preg_match("#(?<=v=)[a-zA-Z0-9-]+(?=&)|(?<=v\/)[^&\n]+(?=\?)|(?<=v=)[^&\n]+|(?<=youtu.be/)[^&\n]+#", $data->video_url, $matches);
+        if (count($matches) == 0) {
+            return response()->json(['error' => '請放入正確的youtube影片網址'], 401);
+        }
+        $video_id = $matches[0];
+        $video_pic_url = 'https://img.youtube.com/vi/' . $video_id . '/maxresdefault.jpg';
+        $headers = @get_headers($video_pic_url);
+        if (!$headers || $headers[0] == 'HTTP/1.1 404 Not Found') {
+            $video_pic_url = 'https://img.youtube.com/vi/' . $video_id . '/mqdefault.jpg';
+        }
 
-            if (Post::find($data->post_id)) { //更新POST
-                Post::find($data->post_id)->update([
-                    'uva_topic_id' => UvaTopic::get_uva_topic_id($data->serial),
-                    'video_url' => 'https://www.youtube.com/watch?v=' . $video_id,
-                    'video_id' => $video_id,
-                    'video_pic_url' => $video_pic_url,
-                    'content' => $data->content,
-                ]);
-                return response()->json(['success' => '成功更新貼文'], 200);
-            } else {
-                Post::create([  //添加POST
-                    'user_id' => Auth::user()->id,
-                    'uva_topic_id' => UvaTopic::get_uva_topic_id($data->serial),
-                    'video_url' => $data->video_url,
-                    'video_id' => $video_id,
-                    'video_pic_url' => $video_pic_url,
-                    'content' => $data->content,
-                ]);
-                return response()->json(['success' => '成功創立貼文'], 200);
-            }
+        if (Post::find($data->post_id)) { //更新POST
+            Post::find($data->post_id)->update([
+                'uva_topic_id' => UvaTopic::get_uva_topic_id($data->serial),
+                'video_url' => 'https://www.youtube.com/watch?v=' . $video_id,
+                'video_id' => $video_id,
+                'video_pic_url' => $video_pic_url,
+                'content' => $data->content,
+            ]);
+            return response()->json(['success' => '成功更新貼文'], 200);
+        } else {
+            Post::create([  //添加POST
+                'user_id' => Auth::user()->id,
+                'uva_topic_id' => UvaTopic::get_uva_topic_id($data->serial),
+                'video_url' => $data->video_url,
+                'video_id' => $video_id,
+                'video_pic_url' => $video_pic_url,
+                'content' => $data->content,
+            ]);
+            return response()->json(['success' => '成功創立貼文'], 200);
         }
     }
     public function del_post(Request $data)
@@ -68,18 +67,26 @@ class PostController extends Controller
         ]);
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 401);
-        } else {
-            $Post = Post::where([
-                'user_id' => Auth::user()->id,
-                'id' => $data->post_id
-            ])->delete();
-            if ($Post == 1) {
-                return response()->json(['success' => '成功刪除貼文'], 200);
-            }
+        }
+        $Post = Post::where([
+            'user_id' => Auth::user()->id,
+            'id' => $data->post_id
+        ])->delete();
+        if ($Post == 1) {
+            return response()->json(['success' => '成功刪除貼文'], 200);
         }
     }
     public function like_post(Request $data)
     {
+        $validator = Validator::make($data->all(), [
+            'post_id' => 'required|exists:posts,id',
+        ], [
+            'required' => '欄位沒有填寫完整!',
+            'post_id.exists' => '貼文不存在',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 401);
+        }
         if (Post::find($data->post_id)) {
             $like = $data->like;
             if ($like == 1) {
@@ -110,14 +117,14 @@ class PostController extends Controller
     public function get_post(Request $data)
     {
         $post_id = $data->post_id;
-        if ($post_id != '') {
+        if ($post_id != '') { //單一篇post
             try {
                 $posts = Post::find($post_id);
                 $posts = self::tidy_post($posts);
             } catch (\Throwable $th) {
                 return response()->json(['success' => '貼文不存在'], 401);
             }
-        } else {
+        } else { //多篇post
             $star = collect(json_decode($data->star, true)); //選幾星
             $sort = $data->sort; //0 or null新 1舊 2留言多 3留言少 4心多 5心少
             $page = $data->page;
