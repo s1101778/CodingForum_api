@@ -10,13 +10,11 @@ class TestController extends Controller
 
     public function test1()
     {
-        $url = 'https://img.youtube.com/vi/XtY5hA4HKGc/maxresdefault.jpg';
-        $file_headers = @get_headers($url);
-        if (!$file_headers || $file_headers[0] == 'HTTP/1.1 404 Not Found') {
-            return response()->json(['success' =>  'bad'], 200);
-        } else {
-        }
-        return response()->json(['success' =>  '3'], 200);
+        $bytes = random_bytes(8);
+        $base64 = base64_encode($bytes);
+
+        $out = rtrim(strtr($base64, '+/', '-_'), '=');
+        return response()->json(['success' =>  $out], 200);
     }
     public function test2()
     {

@@ -39,7 +39,7 @@ class PostController extends Controller
             if (Post::find($data->post_id)) { //更新POST
                 Post::find($data->post_id)->update([
                     'uva_topic_id' => UvaTopic::get_uva_topic_id($data->serial),
-                    'video_url' => $data->video_url,
+                    'video_url' => 'https://www.youtube.com/watch?v=' . $video_id,
                     'video_id' => $video_id,
                     'video_pic_url' => $video_pic_url,
                     'content' => $data->content,
@@ -121,7 +121,6 @@ class PostController extends Controller
             $star = collect(json_decode($data->star, true)); //選幾星
             $sort = $data->sort; //0 or null新 1舊 2留言多 3留言少 4心多 5心少
             $page = $data->page;
-            $page = 0;
             $posts = Post::all();
 
             $posts = $posts->map(function ($item, $key) use ($star) {
@@ -154,7 +153,7 @@ class PostController extends Controller
             }
             $posts = $posts->filter()->values(); //清null
 
-            // $posts = $posts->slice($page * 5, $page + 5)->values();
+            $posts = $posts->forPage($page, 8)->values();
         }
         return response()->json(['success' => $posts], 200);
     }
