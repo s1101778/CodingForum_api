@@ -36,15 +36,20 @@ class CommentController extends Controller
                 ]);
                 return response()->json(['success' => '成功更新留言'], 200);
             } else {
-                Comment::create([  //添加Comment
-                    'parent_comment_id' => $data->parent_comment_id,
-                    'user_id' => Auth::user()->id,
-                    'post_id' => $data->post_id,
-                    'mention' => $data->mention,
-                    'content' => $data->content,
-                ]);
-                Post::find($data->post_id)->increment('comments_count');
-                return response()->json(['success' => '成功發布留言'], 200);
+                $parent_post_id = Comment::find($data->parent_comment_id)->post_id;
+                if ($parent_post_id == $data->post_id) {
+                    Comment::create([  //添加Comment
+                        'parent_comment_id' => $data->parent_comment_id,
+                        'user_id' => Auth::user()->id,
+                        'post_id' => $data->post_id,
+                        'mention' => $data->mention,
+                        'content' => $data->content,
+                    ]);
+                    Post::find($data->post_id)->increment('comments_count');
+                    return response()->json(['success' => '成功發布留言'], 200);
+                } else {
+                    return response()->json(['error' => '貼文ID與父Comment不匹配'], 401);
+                }
             }
         }
     }
