@@ -29,7 +29,7 @@ class CommentController extends Controller
 
         ]);
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()->first()], 401);
+            return response()->json(['error' => $validator->errors()->first()], 402);
         }
         if (Comment::find($data->comment_id)) { //更新Comment
             Comment::find($data->comment_id)->update([
@@ -51,7 +51,7 @@ class CommentController extends Controller
                     Post::find($data->post_id)->increment('comments_count');
                     return response()->json(['success' => '成功發布留言'], 200);
                 } else {
-                    return response()->json(['error' => '貼文ID與父Comment不匹配'], 401);
+                    return response()->json(['error' => '貼文ID與父Comment不匹配'], 402);
                 }
             } else {
                 Comment::create([  //添加Comment
@@ -74,7 +74,7 @@ class CommentController extends Controller
             'comment_id.exists' => '留言不存在',
         ]);
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()->first()], 401);
+            return response()->json(['error' => $validator->errors()->first()], 402);
         }
 
         $Comment = Comment::where([
@@ -99,7 +99,7 @@ class CommentController extends Controller
     {
         $lock = Cache::lock('key', 5);
         if (!$lock->get()) {
-            return response()->json(['error' => '操作過於頻繁'], 401);
+            return response()->json(['error' => '操作過於頻繁'], 402);
         }
         $validator = Validator::make($data->all(), [
             'comment_id' => 'required|exists:comments,id',
@@ -109,11 +109,11 @@ class CommentController extends Controller
             'comment_id.exists' => '評論不存在',
         ]);
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()->first()], 401);
+            return response()->json(['error' => $validator->errors()->first()], 402);
         }
         $dislike_or_like = $data->dislike_or_like;
         if ($dislike_or_like != 1 && $dislike_or_like != -1) {
-            return response()->json(['error' => 'dislike_or_like只限於-1 or 1'], 401);
+            return response()->json(['error' => 'dislike_or_like只限於-1 or 1'], 402);
         }
         $user_like = UserLike::where([
             'user_id' => Auth::user()->id,

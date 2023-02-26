@@ -24,11 +24,11 @@ class PostController extends Controller
             'serial.exists' => '題目編號不存在',
         ]);
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()->first()], 401);
+            return response()->json(['error' => $validator->errors()->first()], 402);
         }
         preg_match("#(?<=v=)[a-zA-Z0-9-]+(?=&)|(?<=v\/)[^&\n]+(?=\?)|(?<=v=)[^&\n]+|(?<=youtu.be/)[^&\n]+#", $data->video_url, $matches);
         if (count($matches) == 0) {
-            return response()->json(['error' => '請放入正確的youtube影片網址'], 401);
+            return response()->json(['error' => '請放入正確的youtube影片網址'], 402);
         }
         $video_id = $matches[0];
         $video_pic_url = 'https://img.youtube.com/vi/' . $video_id . '/maxresdefault.jpg';
@@ -67,7 +67,7 @@ class PostController extends Controller
             'post_id.exists' => '貼文不存在',
         ]);
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()->first()], 401);
+            return response()->json(['error' => $validator->errors()->first()], 402);
         }
         $Post = Post::where([
             'user_id' => Auth::user()->id,
@@ -81,7 +81,7 @@ class PostController extends Controller
     {
         $lock = Cache::lock('key', 5);
         if (!$lock->get()) {
-            return response()->json(['error' => '操作過於頻繁'], 401);
+            return response()->json(['error' => '操作過於頻繁'], 402);
         }
         $validator = Validator::make($data->all(), [
             'post_id' => 'required|exists:posts,id',
@@ -91,11 +91,11 @@ class PostController extends Controller
             'post_id.exists' => '貼文不存在',
         ]);
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()->first()], 401);
+            return response()->json(['error' => $validator->errors()->first()], 402);
         }
         $dislike_or_like = $data->dislike_or_like;
         if ($dislike_or_like != 1 && $dislike_or_like != -1) {
-            return response()->json(['error' => 'dislike_or_like只限於-1 or 1'], 401);
+            return response()->json(['error' => 'dislike_or_like只限於-1 or 1'], 402);
         }
         $user_like = UserLike::where([
             'user_id' => Auth::user()->id,
@@ -137,7 +137,7 @@ class PostController extends Controller
                 $posts = Post::find($post_id);
                 $posts = self::tidy_post($posts);
             } catch (\Throwable $th) {
-                return response()->json(['success' => '貼文不存在'], 401);
+                return response()->json(['success' => '貼文不存在'], 402);
             }
         } else { //多篇post
             $star = collect(json_decode($data->star, true)); //選幾星

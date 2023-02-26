@@ -24,7 +24,7 @@ class ForgotPasswordController extends Controller
             'email.exists' => '無此信箱，請確認信箱並重新輸入'
         ]);
         if ($data->fails()) {
-            return response()->json(['error' => $data->errors()->first()], 401);
+            return response()->json(['error' => $data->errors()->first()], 402);
         }
 
         // Delete all old code that user send before.
@@ -58,12 +58,12 @@ class ForgotPasswordController extends Controller
             'token.exists' => '無此token',
         ]);
         if ($data->fails()) {
-            return response()->json(['error' => $data->errors()->first()], 401);
+            return response()->json(['error' => $data->errors()->first()], 402);
         }
         $passwordReset = PasswordReset::firstWhere('token', $request->token);
         if ($passwordReset->created_at->addHour() < now()) {
             PasswordReset::where('token', $request->token)->delete();
-            return response(['message' => "連結已過期，請重新申請重置密碼"], 402);
+            return response(['message' => "連結已過期，請重新申請重置密碼"], 403);
         }
         return response(['message' => "token未過期"], 200);
     }
@@ -79,12 +79,12 @@ class ForgotPasswordController extends Controller
             'password.confirmed' => '密碼不一致',
         ]);
         if ($data->fails()) {
-            return response()->json(['error' => $data->errors()->first()], 401);
+            return response()->json(['error' => $data->errors()->first()], 402);
         }
         $passwordReset = PasswordReset::firstWhere('token', $request->token);
         if ($passwordReset->created_at->addHour() < now()) {
             PasswordReset::where('token', $request->token)->delete();
-            return response(['message' => "連結已過期，請重新申請重置密碼"], 401);
+            return response(['message' => "連結已過期，請重新申請重置密碼"], 402);
         }
 
         User::firstWhere('email', $passwordReset->email)->update(['password' => bcrypt($request->password)]);

@@ -26,7 +26,7 @@ class AuthController extends Controller
             'email.unique' => '信箱已被使用',
         ]);
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()->first()], 401);
+            return response()->json(['error' => $validator->errors()->first()], 402);
         } else {
             $user = User::create([
                 'name' => $data->name,
