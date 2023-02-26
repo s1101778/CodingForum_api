@@ -33,7 +33,8 @@ class AuthController extends Controller
                 'account' => $data->account,
                 'email' => $data->email,
                 'password' => bcrypt($data->password),
-                'remember_token' => Str::random(10)
+                'remember_token' => Str::random(10),
+                'pic_url' => 'https://bakerychu.com/CodingForum/default_user.png'
             ]);
             $token = $user->createToken('Laravel9PassportAuth')->accessToken;
             return response()->json(['success' => $token], 200);

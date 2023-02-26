@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\UserLike;
+use Illuminate\Support\Facades\Cache;
 
 class CommentController extends Controller
 {
@@ -96,41 +97,56 @@ class CommentController extends Controller
     }
     public function like_comment(Request $data)
     {
+        $lock = Cache::lock('key', 5);
+        if (!$lock->get()) {
+            return response()->json(['error' => '操作過於頻繁'], 401);
+        }
         $validator = Validator::make($data->all(), [
             'comment_id' => 'required|exists:comments,id',
+            'dislike_or_like' => 'required', //-1 1
         ], [
             'required' => '欄位沒有填寫完整!',
-            'comment_id.exists' => '留言不存在',
+            'comment_id.exists' => '評論不存在',
         ]);
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 401);
         }
-        if (Comment::find($data->comment_id)) {
-            $like = $data->like;
-            if ($like == 1) {
-                if (UserLike::where([ //ig愛心格式才需要
-                    'user_id' => Auth::user()->id,
-                    'comment_id' => $data->comment_id
-                ])->doesntExist()) {
-                    UserLike::create([
-                        'user_id' => Auth::user()->id,
-                        'comment_id' => $data->comment_id,
-                    ]);
-                    Comment::find($data->comment_id)->increment('likes');
-                }
-            } else if ($like == 0) {
-                if (Comment::find($data->comment_id)->likes > 0) {
-                    $UserLike = UserLike::where([
-                        'user_id' => Auth::user()->id,
-                        'comment_id' => $data->comment_id
-                    ])->delete();
-                    if ($UserLike == 1) {
-                        Comment::find($data->comment_id)->decrement('likes');
-                    }
-                }
-            }
-            return response()->json(['success' => '更新喜歡狀態成功'], 200);
+        $dislike_or_like = $data->dislike_or_like;
+        if ($dislike_or_like != 1 && $dislike_or_like != -1) {
+            return response()->json(['error' => 'dislike_or_like只限於-1 or 1'], 401);
         }
+        $user_like = UserLike::where([
+            'user_id' => Auth::user()->id,
+            'comment_id' => $data->comment_id
+        ])->first();
+
+        $comment = Comment::find($data->comment_id);
+
+        if ($user_like === null) {
+            UserLike::create([
+                'user_id' => Auth::user()->id,
+                'post_id' => $comment->post_id,
+                'comment_id' => $data->comment_id,
+                'dislike_or_like' => $dislike_or_like,
+            ]);
+            if ($dislike_or_like == 1) {
+                $comment->increment('likes');
+            } else if ($dislike_or_like == -1) {
+                $comment->decrement('likes');
+            }
+        } else {
+            if ($dislike_or_like == 1 && $user_like->dislike_or_like == -1) {
+                $user_like->delete();
+                $comment->increment('likes');
+            } else if ($dislike_or_like == -1 && $user_like->dislike_or_like == 1) {
+                $user_like->delete();
+                $comment->decrement('likes');
+            }
+        }
+
+        $lock->release();
+
+        return response()->json(['success' => '更新喜歡狀態成功'], 200);
     }
     public function get_comment(Request $data)
     {
@@ -141,7 +157,7 @@ class CommentController extends Controller
             'post_id.exists' => '貼文不存在',
         ]);
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()->first()], 401);
+            return response()->json(['error' => $validator->errors()->first()], 402);
         }
         $page = $data->page;
         $post_id = $data->post_id;
@@ -161,7 +177,7 @@ class CommentController extends Controller
             'comment_id.exists' => '留言不存在',
         ]);
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()->first()], 401);
+            return response()->json(['error' => $validator->errors()->first()], 403);
         }
         $page = ($data->page) + 1;
         $comment_id = $data->comment_id;
@@ -185,9 +201,10 @@ class CommentController extends Controller
                     'user_id' => $item['user_id'],
                     'post_id' => $item['post_id'],
                     'user_name' => $item->User->name,
+                    'pic_url' => $item->User->pic_url,
                     'content' => $item['content'],
                     'likes' => $item['likes'],
-                    'children_comment' => self::tidy_comment(Comment::where('parent_comment_id', $item['id'])->get()->sortByDesc('created_at')->sortByDesc('likes')->values()->take(2), true),
+                    'children_comments' => self::tidy_comment(Comment::where('parent_comment_id', $item['id'])->get()->sortByDesc('created_at')->sortByDesc('likes')->values()->take(2), true),
                     'mention' => $mention,
                     'mention_name' => $mention_name,
                     'created_at' => $item['created_at']->format('Y/m/d H:i:s'),

@@ -10,11 +10,13 @@ class TestController extends Controller
 
     public function test1()
     {
-        $bytes = random_bytes(8);
-        $base64 = base64_encode($bytes);
-
-        $out = rtrim(strtr($base64, '+/', '-_'), '=');
-        return response()->json(['success' =>  $out], 200);
+        $a = UserLike::where([ //ig愛心格式才需要
+            'user_id' => 1,
+            'post_id' => 1
+        ])->whereNull('comment_id');
+        if ($a->exists()) {
+            return response()->json(['success' =>  $a], 200);
+        }
     }
     public function test2()
     {
