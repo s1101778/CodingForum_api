@@ -124,10 +124,14 @@ class PostController extends Controller
                 $post->decrement('likes');
             }
         }
-
+        $user_like = UserLike::where([
+            'user_id' => Auth::user()->id,
+            'post_id' => $data->post_id
+        ])->whereNull('comment_id')->first();
         $lock->release();
 
-        return response()->json(['success' => '更新喜歡狀態成功'], 200);
+        $now_post_like = Post::find($data->post_id)->likes;
+        return response()->json(['success' => '更新喜歡狀態成功', 'user_post_like' => $user_like?->dislike_or_like, 'now_post_like' => $now_post_like], 200);
     }
     public function get_post(Request $data)
     {

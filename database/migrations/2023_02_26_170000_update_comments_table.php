@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::table('comments', function (Blueprint $table) {
             $table->integer('likes')->default(0)->change();
+            $table->integer('children_comment_count')->default(0)->after("parent_comment_id");
         });
     }
 
@@ -27,6 +28,7 @@ return new class extends Migration
     {
         Schema::table('comments', function (Blueprint $table) {
             $table->unsignedInteger('likes')->default(0)->change();
+            $table->dropColumn('children_comment_count');
         });
     }
 };
