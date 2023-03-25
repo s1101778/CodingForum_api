@@ -50,25 +50,42 @@ class AuthController extends Controller
 
         if (Auth::attempt($userdata)) {
             $token = auth()->user()->createToken('Laravel9PassportAuth')->accessToken;
-            return response()->json(['success' => $token], 200);
+            $user = auth()->user();
+            return response()->json(['success' => $token, 'user' => $user], 200);
         } else {
             return response()->json(['error' => 'Unauthorised'], 401);
         }
     }
 
-    public function user()
+    public function user(Request $data)
     {
-        $user = Auth::user();
-        return response()->json(['user' => $user], 200);
+        $user_id = '';
+        try {
+            $user_id = auth()->user()->id;
+        } catch (\Throwable $th) {
+        }
 
+        $validator = Validator::make($data->all(), [
+            'account' => 'required|exists:users,account',
+        ], [
+            'required' => '欄位沒有填寫完整!',
+            'account.exists' => '用戶不存在',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 402);
+        }
+        $url_user = User::where('account', $data->account)->first();
+        $self = 0;
+        if ($url_user->id == $user_id) {
+            $self = 1;
+        }
+        return response()->json(['user' => $url_user, 'self' => $self, 'user_id' => $user_id], 200);
         //  return response()->json($request->user());
     }
 
     public function logout()
     {
         Auth::user()->token()->revoke();
-        return response()->json([
-            'message' => 'Successfully logged out'
-        ]);
+        return response()->json(['success', '成功登出'], 200);
     }
 }

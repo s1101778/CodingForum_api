@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\UvaController;
 use App\Http\Controllers\GetLikeController;
 use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
@@ -42,10 +43,10 @@ php artisan schedule:list
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
+    Route::post('user', [AuthController::class, 'user']);
 
     Route::middleware('auth:api')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
-        Route::post('user', [AuthController::class, 'user']);
     });
     Route::prefix('reset_password')->group(function () {
         Route::post('send',  [ForgotPasswordController::class, 'send_reset_mail']);
@@ -63,6 +64,7 @@ Route::prefix('forum')->group(function () {
         Route::post('del_comment', [CommentController::class, 'del_comment']);
         Route::post('get_like', [GetLikeController::class, 'get_like']);
     });
+    Route::get('get_uva', [UvaController::class, 'get_uva']);
     Route::post('get_post', [PostController::class, 'get_post']);
     Route::post('get_comment', [CommentController::class, 'get_comment']);
     Route::post('get_more_children_comment', [CommentController::class, 'get_more_children_comment']);

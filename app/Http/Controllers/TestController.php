@@ -25,8 +25,8 @@ class TestController extends Controller
         // $comment = \DB::select("select * from comments as comments order by 'comments.likes' desc")->cursorPaginate(5);
 
 
-        $comment = Comment::orderByDesc('likes')->orderBy('created_at')->orderByDesc('id')->cursorPaginate(5);
-
+        // $comment = Comment::orderByDesc('likes')->orderBy('created_at')->cursorPaginate(5);
+        $comment = DB::table('comments')->orderBy('likes', 'desc')->orderBy('id', 'desc')->get();
 
         // $next_cursor = $comment->toArray()['next_cursor'];
 

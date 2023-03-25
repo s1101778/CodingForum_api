@@ -55,14 +55,15 @@ class CommentController extends Controller
                     return response()->json(['error' => '貼文ID與父Comment不匹配'], 402);
                 }
             } else {
-                Comment::create([  //添加Comment
+                $comment = Comment::create([  //添加Comment
                     'user_id' => Auth::user()->id,
                     'post_id' => $data->post_id,
                     'mention' => $data->mention,
                     'content' => $data->content,
                 ]);
                 Post::find($data->post_id)->increment('comments_count');
-                return response()->json(['success' => '成功發布留言'], 200);
+                $comment = self::tidy_comment(Comment::where('id', $comment->id)->get());
+                return response()->json(['success' => '成功發布留言', 'comment' => $comment], 200);
             }
         }
     }
@@ -172,7 +173,7 @@ class CommentController extends Controller
         $post_id = $data->post_id;
         $comments = Post::find($post_id)->Comment->whereNull('parent_comment_id')->sortByDesc('created_at')->sortByDesc('likes')->forPage($page, 2)->values();
 
-        $comments = self::tidy_comment($comments, false);
+        $comments = self::tidy_comment($comments);
 
         $comments = $comments->filter()->values(); //清null
         return response()->json(['success' => $comments], 200);
@@ -192,35 +193,33 @@ class CommentController extends Controller
         $comment_id = $data->comment_id;
         $children_comments = Comment::where('parent_comment_id', $comment_id)->get()->sortByDesc('created_at')->sortByDesc('likes')->forPage($page, 4)->values();
 
-        $children_comments = self::tidy_comment($children_comments, true);
+        $children_comments = self::tidy_comment($children_comments);
         $children_comments = $children_comments->filter()->values(); //清null
         return response()->json(['success' => $children_comments], 200);
     }
-    public function tidy_comment($comments, $Children_tidy)
+    public function tidy_comment($comments)
     {
-        $comments = $comments->map(function ($item, $key) use ($Children_tidy) {
-            if ($item['parent_comment_id'] == '' || $Children_tidy) {
-                $mention = collect(json_decode($item['mention'], true));
-                $mention_name = collect();
-                $mention->map(function ($item, $key) use ($mention_name) {
-                    $mention_name->push(User::find($item)->name);
-                });
-                return collect([
-                    'id' => $item['id'],
-                    'user_id' => $item['user_id'],
-                    'post_id' => $item['post_id'],
-                    'user_name' => $item->User->name,
-                    'pic_url' => $item->User->pic_url,
-                    'content' => $item['content'],
-                    'likes' => $item['likes'],
-                    'children_comment_count' => $item['children_comment_count'],
-                    'children_comments' => self::tidy_comment(Comment::where('parent_comment_id', $item['id'])->get()->sortByDesc('created_at')->sortByDesc('likes')->values()->take(2), true),
-                    'mention' => $mention,
-                    'mention_name' => $mention_name,
-                    'created_at' => $item['created_at']->format('Y/m/d H:i:s'),
-                    'updated_at' => $item['updated_at']->format('Y/m/d H:i:s'),
-                ]);
-            }
+        $comments = $comments->map(function ($item, $key) {
+            $mention = collect(json_decode($item['mention'], true));
+            $mention_name = collect();
+            $mention->map(function ($item, $key) use ($mention_name) {
+                $mention_name->push(User::find($item)->name);
+            });
+            return collect([
+                'id' => $item['id'],
+                'user_id' => $item['user_id'],
+                'post_id' => $item['post_id'],
+                'user_name' => $item->User->name,
+                'pic_url' => $item->User->pic_url,
+                'content' => $item['content'],
+                'likes' => $item['likes'],
+                'children_comment_count' => $item['children_comment_count'],
+                'children_comments' => self::tidy_comment(Comment::where('parent_comment_id', $item['id'])->get()->sortByDesc('created_at')->sortByDesc('likes')->values()->take(2)),
+                'mention' => $mention,
+                'mention_name' => $mention_name,
+                'created_at' => $item['created_at']->format('Y/m/d H:i:s'),
+                'updated_at' => $item['updated_at']->format('Y/m/d H:i:s'),
+            ]);
         });
         return $comments;
     }

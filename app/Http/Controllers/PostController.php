@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Models\UvaTopic;
 use App\Models\Post;
+use App\Models\User;
 use App\Models\UserLike;
 use Illuminate\Support\Facades\Cache;
 
@@ -144,10 +145,18 @@ class PostController extends Controller
                 return response()->json(['success' => '貼文不存在'], 402);
             }
         } else { //多篇post
+
             $star = collect(json_decode($data->star, true)); //選幾星
             $sort = $data->sort; //0 or null新 1舊 2留言多 3留言少 4心多 5心少
             $page = $data->page;
-            $posts = Post::all();
+            $user_account = $data->user_account;
+
+            if ($user_account) {
+                $user_id = User::where('account', $user_account)->first()->id;
+                $posts = Post::where('user_id', $user_id)->get();
+            } else {
+                $posts = Post::all();
+            }
 
             $posts = $posts->map(function ($item, $key) use ($star) {
                 if ($star->contains($item->UvaTopic->star) || count($star) == 0) {
@@ -188,6 +197,7 @@ class PostController extends Controller
         return collect([
             'id' => $item['id'],
             'user_id' => $item['user_id'],
+            'user_account' => $item->User->account,
             'user_name' => $item->User->name,
             'uva_topic' => $item->UvaTopic,
             'video_url' => $item['video_url'],
