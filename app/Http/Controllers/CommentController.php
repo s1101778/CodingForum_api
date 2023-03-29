@@ -39,7 +39,7 @@ class CommentController extends Controller
                 ]);
                 return response()->json(['success' => '成功更新留言'], 200);
             } else {
-                return response()->json(['error' => '權限不符'], 200);
+                return response()->json(['error' => '權限不符'], 402);
             }
         } else {
             if ($data->parent_comment_id) {

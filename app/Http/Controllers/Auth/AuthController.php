@@ -61,7 +61,7 @@ class AuthController extends Controller
     {
         $user_id = '';
         try {
-            $user_id = auth()->user()->id;
+            $user_id = Auth::user()->id;
         } catch (\Throwable $th) {
         }
 
@@ -80,7 +80,6 @@ class AuthController extends Controller
             $self = 1;
         }
         return response()->json(['user' => $url_user, 'self' => $self, 'user_id' => $user_id], 200);
-        //  return response()->json($request->user());
     }
 
     public function logout()

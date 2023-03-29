@@ -155,7 +155,6 @@ class PostController extends Controller
 
             $star = collect(json_decode($data->star, true)); //選幾星
             $sort = $data->sort; //0 or null新 1舊 2留言多 3留言少 4心多 5心少
-            $page = $data->page;
             $user_account = $data->user_account;
 
             if ($user_account) {
@@ -195,7 +194,6 @@ class PostController extends Controller
             }
             $posts = $posts->filter()->values(); //清null
 
-            $posts = $posts->forPage($page, 8)->values();
         }
         return response()->json(['success' => $posts], 200);
     }
