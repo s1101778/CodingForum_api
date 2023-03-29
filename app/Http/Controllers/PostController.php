@@ -39,14 +39,18 @@ class PostController extends Controller
         }
 
         if (Post::find($data->post_id)) { //更新POST
-            Post::find($data->post_id)->update([
-                'uva_topic_id' => UvaTopic::get_uva_topic_id($data->serial),
-                'video_url' => 'https://www.youtube.com/watch?v=' . $video_id,
-                'video_id' => $video_id,
-                'video_pic_url' => $video_pic_url,
-                'content' => $data->content,
-            ]);
-            return response()->json(['success' => '成功更新貼文'], 200);
+            if (Post::find($data->post_id)->user_id == Auth::user()->id) {
+                Post::find($data->post_id)->update([
+                    'uva_topic_id' => UvaTopic::get_uva_topic_id($data->serial),
+                    'video_url' => 'https://www.youtube.com/watch?v=' . $video_id,
+                    'video_id' => $video_id,
+                    'video_pic_url' => $video_pic_url,
+                    'content' => $data->content,
+                ]);
+                return response()->json(['success' => '成功更新貼文'], 200);
+            } else {
+                return response()->json(['error' => '權限不符'], 200);
+            }
         } else {
             Post::create([  //添加POST
                 'user_id' => Auth::user()->id,
@@ -71,10 +75,12 @@ class PostController extends Controller
             return response()->json(['error' => $validator->errors()->first()], 402);
         }
         $Post = Post::where([
-            'user_id' => Auth::user()->id,
             'id' => $data->post_id
-        ])->delete();
-        if ($Post == 1) {
+        ]);
+        if (Auth::user()->id != $Post->first()->user_id)
+            return response()->json(['error' => '權限不符'], 200);
+        else {
+            $Post->delete();
             return response()->json(['success' => '成功刪除貼文'], 200);
         }
     }
@@ -129,9 +135,10 @@ class PostController extends Controller
             'user_id' => Auth::user()->id,
             'post_id' => $data->post_id
         ])->whereNull('comment_id')->first();
-        $lock->release();
 
         $now_post_like = Post::find($data->post_id)->likes;
+        $lock->release();
+
         return response()->json(['success' => '更新喜歡狀態成功', 'user_post_like' => $user_like?->dislike_or_like, 'now_post_like' => $now_post_like], 200);
     }
     public function get_post(Request $data)

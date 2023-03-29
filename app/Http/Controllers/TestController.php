@@ -10,14 +10,6 @@ use Illuminate\Support\Facades\DB;
 class TestController extends Controller
 {
 
-    public function showPage()
-    {
-        // $comments = Comment::select('*')->orderBy('id', 'ASC')->cursorPaginate(5);
-
-        $comments = Comment::orderByDesc('likes')->orderByDesc('id')->cursorPaginate(5);
-        return view('welcome', ['comments' => $comments]);
-    }
-
     public function test1()
     {
         // orderBy('likes') where('post_id', 1)->whereNull('parent_comment_id')->orderBy('created_at', 'DESC')->where('com.post_id', 1)->
@@ -32,7 +24,7 @@ class TestController extends Controller
 
         // $comment = self::tidy_comment($comment, $next_cursor);
 
-        return response()->json(['success' =>  $comment], 200);
+        return response()->json(['md5' => md5($comment), 'success' =>  $comment], 200);
     }
 
     public function test2()

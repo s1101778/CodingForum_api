@@ -32,11 +32,15 @@ class CommentController extends Controller
             return response()->json(['error' => $validator->errors()->first()], 402);
         }
         if (Comment::find($data->comment_id)) { //更新Comment
-            Comment::find($data->comment_id)->update([
-                'mention' => $data->mention,
-                'content' => $data->content,
-            ]);
-            return response()->json(['success' => '成功更新留言'], 200);
+            if (Comment::find($data->comment_id)->user_id == Auth::user()->id) {
+                Comment::find($data->comment_id)->update([
+                    'mention' => $data->mention,
+                    'content' => $data->content,
+                ]);
+                return response()->json(['success' => '成功更新留言'], 200);
+            } else {
+                return response()->json(['error' => '權限不符'], 200);
+            }
         } else {
             if ($data->parent_comment_id) {
                 $parent_post_id = Comment::find($data->parent_comment_id)->post_id;
@@ -80,9 +84,11 @@ class CommentController extends Controller
         }
 
         $Comment = Comment::where([
-            'user_id' => Auth::user()->id,
             'id' => $data->comment_id
         ]);
+        if (Auth::user()->id != $Comment->first()->user_id)
+            return response()->json(['error' => '權限不符'], 200);
+
         $post_id = $Comment->first()->Post->id;
 
         if ($Comment->first()->parent_comment_id != null) {
@@ -153,10 +159,16 @@ class CommentController extends Controller
                 $comment->decrement('likes');
             }
         }
+        $user_like = UserLike::where([
+            'user_id' => Auth::user()->id,
+            'comment_id' => $data->comment_id
+        ])->first();
+
+        $now_comment_like = Comment::find($data->comment_id)->likes;
 
         $lock->release();
 
-        return response()->json(['success' => '更新喜歡狀態成功'], 200);
+        return response()->json(['success' => '更新喜歡狀態成功', 'user_comment_like' => $user_like?->dislike_or_like, 'now_comment_like' => $now_comment_like], 200);
     }
     public function get_comment(Request $data)
     {
@@ -169,29 +181,27 @@ class CommentController extends Controller
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 402);
         }
-        $page = $data->page;
         $post_id = $data->post_id;
-        $comments = Post::find($post_id)->Comment->whereNull('parent_comment_id')->sortByDesc('created_at')->sortByDesc('likes')->forPage($page, 2)->values();
+        $comments = Post::find($post_id)->Comment->whereNull('parent_comment_id')->sortByDesc('created_at')->sortByDesc('likes')->values();
 
         $comments = self::tidy_comment($comments);
 
         $comments = $comments->filter()->values(); //清null
         return response()->json(['success' => $comments], 200);
     }
-    public function get_more_children_comment(Request $data)
+    public function get_children_comment(Request $data)
     {
         $validator = Validator::make($data->all(), [
-            'comment_id' => 'required|exists:comments,id',
+            'parent_comment_id' => 'required|exists:comments,id',
         ], [
             'required' => '欄位沒有填寫完整!',
-            'comment_id.exists' => '留言不存在',
+            'parent_comment_id.exists' => '留言不存在',
         ]);
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 403);
         }
-        $page = ($data->page) + 1;
-        $comment_id = $data->comment_id;
-        $children_comments = Comment::where('parent_comment_id', $comment_id)->get()->sortByDesc('created_at')->sortByDesc('likes')->forPage($page, 4)->values();
+        $parent_comment_id = $data->parent_comment_id;
+        $children_comments = Comment::where('parent_comment_id', $parent_comment_id)->get()->sortByDesc('created_at')->sortByDesc('likes')->values();
 
         $children_comments = self::tidy_comment($children_comments);
         $children_comments = $children_comments->filter()->values(); //清null

@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('comments', function (Blueprint $table) {
-            $table->unique(['likes', 'id']);
+            $table->dropUnique(['likes', 'id']);
         });
     }
 
@@ -26,7 +26,7 @@ return new class extends Migration
     public function down()
     {
         Schema::table('comments', function (Blueprint $table) {
-            $table->dropUnique(['likes', 'id']);
+            $table->unique(['likes', 'id']);
         });
     }
 };

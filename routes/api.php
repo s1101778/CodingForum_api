@@ -67,7 +67,7 @@ Route::prefix('forum')->group(function () {
     Route::get('get_uva', [UvaController::class, 'get_uva']);
     Route::post('get_post', [PostController::class, 'get_post']);
     Route::post('get_comment', [CommentController::class, 'get_comment']);
-    Route::post('get_more_children_comment', [CommentController::class, 'get_more_children_comment']);
+    Route::post('get_children_comment', [CommentController::class, 'get_children_comment']);
 });
 
 Route::get('sendmail', [PostController::class, 'post']);
