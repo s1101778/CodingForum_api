@@ -2,29 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+
 use App\Models\Comment;
 use App\Models\User;
 use App\Models\Post;
 use Illuminate\Support\Facades\DB;
+use voku\helper\HtmlDomParser;
 
 class TestController extends Controller
 {
 
-    public function test1()
+    public function test1(Request $data)
     {
-        // orderBy('likes') where('post_id', 1)->whereNull('parent_comment_id')->orderBy('created_at', 'DESC')->where('com.post_id', 1)->
-        // $comment = DB::table('comments')->select("select * from comments as com order by 'com.likes' desc")->cursorPaginate(5);
-        // $comment = \DB::select("select * from comments as comments order by 'comments.likes' desc")->cursorPaginate(5);
+        $temp = $data->content;
+        $temp = str_replace("data-id", "dataid", $temp);
 
+        $dom = HtmlDomParser::str_get_html($temp);
+        $elements = collect($dom->findMulti('.mention')->dataid);
 
-        // $comment = Comment::orderByDesc('likes')->orderBy('created_at')->cursorPaginate(5);
-        $comment = DB::table('comments')->orderBy('likes', 'desc')->orderBy('id', 'desc')->get();
+        $elements->map(function ($item, $key) {
+            $taged_user_id = User::where('account', $item)->first()->id;
+        });
 
-        // $next_cursor = $comment->toArray()['next_cursor'];
-
-        // $comment = self::tidy_comment($comment, $next_cursor);
-
-        return response()->json(['md5' => md5($comment), 'success' =>  $comment], 200);
+        return response()->json(['success' =>  $c], 200);
     }
 
     public function test2()

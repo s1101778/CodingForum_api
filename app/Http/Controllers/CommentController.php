@@ -7,9 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Post;
+use App\Models\Tags;
 use App\Models\User;
 use App\Models\UserLike;
 use Illuminate\Support\Facades\Cache;
+use voku\helper\HtmlDomParser;
 
 class CommentController extends Controller
 {
@@ -17,26 +19,43 @@ class CommentController extends Controller
     {
         $validator = Validator::make($data->all(), [
             'post_id' => 'required|exists:posts,id',
+            'comment_id' => 'exists:comments,id',
             'parent_comment_id' => 'exists:comments,id', //二級留言
             'content' => 'required',
-            'mention' => 'required|starts_with:"["|ends_with:"]"',
         ], [
             'required' => '欄位沒有填寫完整!',
             'post_id.exists' => '貼文不存在',
+            'comment_id.exists' => 'comment不存在',
             'parent_comment_id.exists' => '父comment不存在',
-            'mention.starts_with' => 'mention格式不正確',
-            'mention.ends_with' => 'mention格式不正確',
 
         ]);
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 402);
         }
+
+        $temp_content = $data->content;
+        $temp_content = str_replace("data-id", "dataid", $temp_content);
+
+        $tags = collect(HtmlDomParser::str_get_html($temp_content)->findMulti('.mention')->dataid);
+
+
         if (Comment::find($data->comment_id)) { //更新Comment
             if (Comment::find($data->comment_id)->user_id == Auth::user()->id) {
                 Comment::find($data->comment_id)->update([
-                    'mention' => $data->mention,
                     'content' => $data->content,
                 ]);
+
+                Tags::where('comment_id', $data->comment_id)->delete();
+
+                $tags->map(function ($item, $key) use ($data) {
+                    $taged_user_id = User::where('account', $item)->first()->id;
+                    Tags::create([
+                        'comment_user_id' => Auth::user()->id,
+                        'Taged_user_id' => $taged_user_id,
+                        'post_id' => $data->post_id,
+                        'comment_id' => $data->comment_id,
+                    ]);
+                });
                 return response()->json(['success' => '成功更新留言'], 200);
             } else {
                 return response()->json(['error' => '權限不符'], 402);
@@ -45,15 +64,25 @@ class CommentController extends Controller
             if ($data->parent_comment_id) {
                 $parent_post_id = Comment::find($data->parent_comment_id)->post_id;
                 if ($parent_post_id == $data->post_id) {
-                    Comment::create([  //添加Comment
+                    $comment = Comment::create([  //添加Comment
                         'parent_comment_id' => $data->parent_comment_id,
                         'user_id' => Auth::user()->id,
                         'post_id' => $data->post_id,
-                        'mention' => $data->mention,
                         'content' => $data->content,
                     ]);
                     Post::find($data->post_id)->increment('comments_count');
                     Comment::find($data->parent_comment_id)->increment('children_comment_count');
+
+                    $tags->map(function ($item, $key) use ($data, $comment) {
+                        $taged_user_id = User::where('account', $item)->first()->id;
+                        Tags::create([
+                            'comment_user_id' => Auth::user()->id,
+                            'Taged_user_id' => $taged_user_id,
+                            'post_id' => $data->post_id,
+                            'comment_id' => $comment->id,
+                        ]);
+                    });
+
                     return response()->json(['success' => '成功發布留言'], 200);
                 } else {
                     return response()->json(['error' => '貼文ID與父Comment不匹配'], 402);
@@ -62,10 +91,20 @@ class CommentController extends Controller
                 $comment = Comment::create([  //添加Comment
                     'user_id' => Auth::user()->id,
                     'post_id' => $data->post_id,
-                    'mention' => $data->mention,
                     'content' => $data->content,
                 ]);
                 Post::find($data->post_id)->increment('comments_count');
+
+                $tags->map(function ($item, $key) use ($data, $comment) {
+                    $taged_user_id = User::where('account', $item)->first()->id;
+                    Tags::create([
+                        'comment_user_id' => Auth::user()->id,
+                        'Taged_user_id' => $taged_user_id,
+                        'post_id' => $data->post_id,
+                        'comment_id' => $comment->id,
+                    ]);
+                });
+
                 $comment = self::tidy_comment(Comment::where('id', $comment->id)->get());
                 return response()->json(['success' => '成功發布留言', 'comment' => $comment], 200);
             }

@@ -44,6 +44,7 @@ Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
     Route::post('user', [AuthController::class, 'user']);
+    Route::get('get_all_user', [AuthController::class, 'get_all_user']);
 
     Route::middleware('auth:api')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
@@ -73,7 +74,7 @@ Route::prefix('forum')->group(function () {
 Route::get('sendmail', [PostController::class, 'post']);
 
 Route::prefix('test')->group(function () {
-    Route::get('test1', [TestController::class, 'test1']);
+    Route::post('test1', [TestController::class, 'test1']);
     Route::get('test2', [TestController::class, 'test2']);
     Route::get('test3', [TestController::class, 'test3']);
     Route::get('test4', [TestController::class, 'test4']);

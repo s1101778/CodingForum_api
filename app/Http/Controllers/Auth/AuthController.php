@@ -85,6 +85,21 @@ class AuthController extends Controller
     public function logout()
     {
         Auth::user()->token()->revoke();
-        return response()->json(['success', '成功登出'], 200);
+        return response()->json(['success' => '成功登出'], 200);
+    }
+
+    public function get_all_user()
+    {
+        return response()->json(['success' => self::tidy_user(User::all())], 200);
+    }
+    public function tidy_user($users)
+    {
+        $users = $users->map(function ($item, $key) {
+            return collect([
+                'account' => $item['account'],
+                'name' => $item['name'],
+            ]);
+        });
+        return $users;
     }
 }
