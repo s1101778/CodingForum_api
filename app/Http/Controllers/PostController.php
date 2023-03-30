@@ -46,21 +46,27 @@ class PostController extends Controller
                     'video_id' => $video_id,
                     'video_pic_url' => $video_pic_url,
                     'content' => $data->content,
+                    'code' => $data->code,
+                    'code_type' => $data->code_type,
+                    'code_editor_type' => $data->code_editor_type,
                 ]);
                 return response()->json(['success' => '成功更新貼文'], 200);
             } else {
                 return response()->json(['error' => '權限不符'], 200);
             }
         } else {
-            Post::create([  //添加POST
+            $post = Post::create([  //添加POST
                 'user_id' => Auth::user()->id,
                 'uva_topic_id' => UvaTopic::get_uva_topic_id($data->serial),
                 'video_url' => $data->video_url,
                 'video_id' => $video_id,
                 'video_pic_url' => $video_pic_url,
                 'content' => $data->content,
+                'code' => $data->code,
+                'code_type' => $data->code_type,
+                'code_editor_type' => $data->code_editor_type,
             ]);
-            return response()->json(['success' => '成功創立貼文'], 200);
+            return response()->json(['success' => '成功創立貼文', 'post_id' => $post->id], 200);
         }
     }
     public function del_post(Request $data)
@@ -211,6 +217,9 @@ class PostController extends Controller
             'content' => $item['content'],
             'likes' => $item['likes'],
             'comments_count' => $item['comments_count'],
+            'code' => $item['code'],
+            'code_editor_type' => $item['code_editor_type'],
+            'code_type' => $item['code_type'],
             'created_at' => $item['created_at']->format('Y/m/d H:i:s'),
             'updated_at' => $item['updated_at']->format('Y/m/d H:i:s'),
         ]);
