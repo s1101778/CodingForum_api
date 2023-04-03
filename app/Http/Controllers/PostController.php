@@ -50,7 +50,7 @@ class PostController extends Controller
                     'code_type' => $data->code_type,
                     'code_editor_type' => $data->code_editor_type,
                 ]);
-                return response()->json(['success' => '成功更新貼文'], 200);
+                return response()->json(['success' => '成功更新貼文', 'post_id' => $data->post_id], 200);
             } else {
                 return response()->json(['error' => '權限不符'], 200);
             }
@@ -159,22 +159,47 @@ class PostController extends Controller
             }
         } else { //多篇post
 
-            $star = collect(json_decode($data->star, true)); //選幾星
-            $sort = $data->sort; //0 or null新 1舊 2留言多 3留言少 4心多 5心少
+            $star = collect($data->star); //選幾星
+            $sort = $data->sort; //0 or null新 1舊 2心多 3心少 4留言多 5留言少
             $user_account = $data->user_account;
-
+            $code_type = collect($data->code_type);
             if ($user_account) {
                 $user_id = User::where('account', $user_account)->first()->id;
                 $posts = Post::where('user_id', $user_id)->get();
             } else {
                 $posts = Post::all();
             }
-
-            $posts = $posts->map(function ($item, $key) use ($star) {
-                if ($star->contains($item->UvaTopic->star) || count($star) == 0) {
-                    return self::tidy_post($item);
-                }
-            });
+            if (count($star) != 0) {
+                $posts = $posts->map(function ($item, $key) use ($star) {
+                    if ($star->contains($item->UvaTopic->star)) {
+                        return $item;
+                    }
+                });
+            }
+            if (count($code_type) != 0) {
+                $code_type = $code_type->map(function ($item, $key) {
+                    switch ($item) {
+                        case '14':
+                            return 'C';
+                            break;
+                        case '15':
+                            return 'C++';
+                            break;
+                        case '16':
+                            return 'Java';
+                            break;
+                        case '17':
+                            return 'Python';
+                            break;
+                    }
+                });
+                $posts = $posts->filter()->values(); //清null 以防上方篩star 出現null 導致$item->code_type 出錯
+                $posts = $posts->map(function ($item, $key) use ($code_type) {
+                    if ($code_type->contains($item->code_type)) {
+                        return $item;
+                    }
+                });
+            }
             switch ($sort) {
                 case 0:
                     $posts = $posts->sortByDesc('created_at');
@@ -183,25 +208,29 @@ class PostController extends Controller
                     $posts = $posts->sortBy('created_at');
                     break;
                 case 2:
-                    $posts = $posts->sortByDesc('comments_count');
+                    $posts = $posts->sortByDesc('created_at')->sortByDesc('likes');
                     break;
                 case 3:
-                    $posts = $posts->sortBy('comments_count');
+                    $posts = $posts->sortByDesc('created_at')->sortBy('likes');
                     break;
                 case 4:
-                    $posts = $posts->sortByDesc('likes');
+                    $posts = $posts->sortByDesc('created_at')->sortByDesc('comments_count');
                     break;
                 case 5:
-                    $posts = $posts->sortBy('likes');
+                    $posts = $posts->sortByDesc('created_at')->sortBy('comments_count');
                     break;
                 default:
                     $posts = $posts->sortByDesc('created_at');
                     break;
             }
             $posts = $posts->filter()->values(); //清null
-
+            $posts = $posts->map(
+                function ($item, $key) {
+                    return self::tidy_post($item);
+                }
+            );
         }
-        return response()->json(['success' => $posts], 200);
+        return response()->json(['code_type' => $code_type, 'success' => $posts], 200);
     }
     public function tidy_post($item)
     {
@@ -210,6 +239,7 @@ class PostController extends Controller
             'user_id' => $item['user_id'],
             'user_account' => $item->User->account,
             'user_name' => $item->User->name,
+            'user_pic_url' => $item->User->pic_url,
             'uva_topic' => $item->UvaTopic,
             'video_url' => $item['video_url'],
             'video_id' => $item['video_id'],
