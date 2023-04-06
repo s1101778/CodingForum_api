@@ -230,7 +230,7 @@ class PostController extends Controller
                 }
             );
         }
-        return response()->json(['code_type' => $code_type, 'success' => $posts], 200);
+        return response()->json(['success' => $posts], 200);
     }
     public function tidy_post($item)
     {

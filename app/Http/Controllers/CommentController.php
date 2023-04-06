@@ -259,6 +259,7 @@ class CommentController extends Controller
                 'user_id' => $item['user_id'],
                 'post_id' => $item['post_id'],
                 'user_name' => $item->User->name,
+                'user_account' => $item->User->account,
                 'pic_url' => $item->User->pic_url,
                 'content' => $item['content'],
                 'likes' => $item['likes'],

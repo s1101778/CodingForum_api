@@ -8,6 +8,8 @@ use Illuminate\Support\Str;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Controller;
+use Image;
+use Illuminate\Support\Facades\Storage;
 
 
 class AuthController extends Controller
@@ -34,7 +36,8 @@ class AuthController extends Controller
                 'email' => $data->email,
                 'password' => bcrypt($data->password),
                 'remember_token' => Str::random(10),
-                'pic_url' => 'https://bakerychu.com/CodingForum/default_user.png'
+                'pic_url' => 'https://bakerychu.com/CodingForum/default_user.png',
+                'cover_url' => 'https://bakerychu.com/CodingForum/default_cover.jpeg'
             ]);
             $token = $user->createToken('Laravel9PassportAuth')->accessToken;
             return response()->json(['success' => $token], 200);
@@ -80,6 +83,48 @@ class AuthController extends Controller
             $self = 1;
         }
         return response()->json(['user' => $url_user, 'self' => $self, 'user_id' => $user_id], 200);
+    }
+    public function token_user()
+    {
+        return response()->json(['user' => Auth::user()], 200);
+    }
+    public function edit_user(Request $data)
+    {
+        if ($data->pic_url) {
+            if ($data->reset == 1) {
+                Auth::user()->update([
+                    'pic_url' => $data->pic_url,
+                ]);
+            } else {
+                $filename = Auth::user()->account . '_userpic.jpeg';
+                $save_filename = 'https://bakerychu.com/CodingForum/uploads/userpic/' . Auth::user()->account . '_userpic.jpeg';
+                Image::make($data->pic_url)->resize(300, 300)->save(public_path('uploads/userpic/' . $filename));
+                Auth::user()->update([
+                    'pic_url' => $save_filename,
+                ]);
+            }
+        } else  if ($data->cover_url) {
+            if ($data->reset == 1) {
+                Auth::user()->update([
+                    'cover_url' => $data->cover_url,
+                ]);
+            } else {
+                $filename = Auth::user()->account . '_coverpic.jpeg';
+                $save_filename = 'https://bakerychu.com/CodingForum/uploads/coverpic/' . Auth::user()->account . '_coverpic.jpeg';
+                Image::make($data->cover_url)->resize(1500, 300)->save(public_path('uploads/coverpic/' . $filename));
+                Auth::user()->update([
+                    'cover_url' => $save_filename,
+                ]);
+            }
+        } else {
+            Auth::user()->update([
+                'intro' => $data->intro,
+                'github' => $data->github,
+                'instagram' => $data->instagram,
+                'facebook' => $data->facebook,
+            ]);
+        }
+        return response()->json(['user' => '更新成功'], 200);
     }
 
     public function logout()

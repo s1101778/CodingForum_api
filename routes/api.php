@@ -47,6 +47,8 @@ Route::prefix('auth')->group(function () {
     Route::get('get_all_user', [AuthController::class, 'get_all_user']);
 
     Route::middleware('auth:api')->group(function () {
+        Route::post('token_user', [AuthController::class, 'token_user']);
+        Route::post('edit_user', [AuthController::class, 'edit_user']);
         Route::post('logout', [AuthController::class, 'logout']);
     });
     Route::prefix('reset_password')->group(function () {
