@@ -42,7 +42,7 @@ class ForgotPasswordController extends Controller
         $email = $request->email;
         $user = User::firstWhere('email', $email)->name;
 
-        $website = 'https://bakerychu.com/CodingForum/auth/reset_password/' . $newdata['token'];
+        $website = 'https://code.bakerychu.com/api/auth/reset_password/' . $newdata['token'];
         Mail::raw('請點擊網址:' . $website . '前往修改密碼。請注意，此連結僅在申請修改密碼後的一小時內有效。此郵件為系統自動發送。請勿回覆。', function (Message $message) use ($email, $user) {
             $message->from('root@bakerychu.com', '程式交流網');
             $message->to($email, $user)->subject('程式交流網-修改密碼通知');

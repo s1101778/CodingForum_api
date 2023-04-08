@@ -36,8 +36,9 @@ class AuthController extends Controller
                 'email' => $data->email,
                 'password' => bcrypt($data->password),
                 'remember_token' => Str::random(10),
-                'pic_url' => 'https://bakerychu.com/CodingForum/default_user.png',
-                'cover_url' => 'https://bakerychu.com/CodingForum/default_cover.jpeg'
+                'pic_url' => 'https://code.bakerychu.com/api/default_user.png',
+                'cover_url' => 'https://code.bakerychu.com/api/default_cover.jpeg',
+                'intro' => "Hello! I'm " . $data->name . "!"
             ]);
             $token = $user->createToken('Laravel9PassportAuth')->accessToken;
             return response()->json(['success' => $token], 200);
@@ -97,7 +98,7 @@ class AuthController extends Controller
                 ]);
             } else {
                 $filename = Auth::user()->account . '_userpic.jpeg';
-                $save_filename = 'https://bakerychu.com/CodingForum/uploads/userpic/' . Auth::user()->account . '_userpic.jpeg';
+                $save_filename = 'https://code.bakerychu.com/api/uploads/userpic/' . Auth::user()->account . '_userpic.jpeg';
                 Image::make($data->pic_url)->resize(300, 300)->save(public_path('uploads/userpic/' . $filename));
                 Auth::user()->update([
                     'pic_url' => $save_filename,
@@ -110,7 +111,7 @@ class AuthController extends Controller
                 ]);
             } else {
                 $filename = Auth::user()->account . '_coverpic.jpeg';
-                $save_filename = 'https://bakerychu.com/CodingForum/uploads/coverpic/' . Auth::user()->account . '_coverpic.jpeg';
+                $save_filename = 'https://code.bakerychu.com/api/uploads/coverpic/' . Auth::user()->account . '_coverpic.jpeg';
                 Image::make($data->cover_url)->resize(1500, 300)->save(public_path('uploads/coverpic/' . $filename));
                 Auth::user()->update([
                     'cover_url' => $save_filename,
