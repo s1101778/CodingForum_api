@@ -163,11 +163,15 @@ class PostController extends Controller
             $sort = $data->sort; //0 or null新 1舊 2心多 3心少 4留言多 5留言少
             $user_account = $data->user_account;
             $code_type = collect($data->code_type);
+            $serial = $data->serial;
             if ($user_account) {
                 $user_id = User::where('account', $user_account)->first()->id;
                 $posts = Post::where('user_id', $user_id)->get();
             } else {
-                $posts = Post::all();
+                if ($serial)
+                    $posts = UvaTopic::where('serial', $serial)->first()->Post;
+                else
+                    $posts = Post::all();
             }
             if (count($star) != 0) {
                 $posts = $posts->map(function ($item, $key) use ($star) {
