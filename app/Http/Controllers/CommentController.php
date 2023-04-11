@@ -82,8 +82,9 @@ class CommentController extends Controller
                             'comment_id' => $comment->id,
                         ]);
                     });
+                    $comment = self::tidy_comment(Comment::where('id', $comment->id)->get());
 
-                    return response()->json(['success' => '成功發布留言'], 200);
+                    return response()->json(['success' => '成功發布留言', 'comment' => $comment], 200);
                 } else {
                     return response()->json(['error' => '貼文ID與父Comment不匹配'], 402);
                 }
@@ -221,7 +222,7 @@ class CommentController extends Controller
             return response()->json(['error' => $validator->errors()->first()], 402);
         }
         $post_id = $data->post_id;
-        $comments = Post::find($post_id)->Comment->whereNull('parent_comment_id')->sortByDesc('created_at')->sortByDesc('likes')->values();
+        $comments = Post::find($post_id)->Comment->whereNull('parent_comment_id')->sortBy('created_at')->sortByDesc('likes')->values();
 
         $comments = self::tidy_comment($comments);
 
@@ -240,11 +241,11 @@ class CommentController extends Controller
             return response()->json(['error' => $validator->errors()->first()], 403);
         }
         $parent_comment_id = $data->parent_comment_id;
-        $children_comments = Comment::where('parent_comment_id', $parent_comment_id)->get()->sortByDesc('created_at')->sortByDesc('likes')->values();
+        $children_comments = Comment::where('parent_comment_id', $parent_comment_id)->get()->sortBy('created_at')->sortByDesc('likes')->values();
 
         $children_comments = self::tidy_comment($children_comments);
         $children_comments = $children_comments->filter()->values(); //清null
-        return response()->json(['success' => $children_comments], 200);
+        return response()->json(['children_comments_count' => $children_comments->count(), 'success' => $children_comments], 200);
     }
     public function tidy_comment($comments)
     {
@@ -264,7 +265,7 @@ class CommentController extends Controller
                 'content' => $item['content'],
                 'likes' => $item['likes'],
                 'children_comment_count' => $item['children_comment_count'],
-                'children_comments' => self::tidy_comment(Comment::where('parent_comment_id', $item['id'])->get()->sortByDesc('created_at')->sortByDesc('likes')->values()->take(2)),
+                'children_comments' => self::tidy_comment(Comment::where('parent_comment_id', $item['id'])->get()->sortBy('created_at')->sortByDesc('likes')->values()->take(3)),
                 'mention' => $mention,
                 'mention_name' => $mention_name,
                 'created_at' => $item['created_at']->format('Y/m/d H:i:s'),
