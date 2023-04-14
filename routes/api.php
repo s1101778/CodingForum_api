@@ -45,6 +45,7 @@ Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('user', [AuthController::class, 'user']);
     Route::get('get_all_user', [AuthController::class, 'get_all_user']);
+    Route::post('edit_password', [AuthController::class, 'edit_password']);
 
     Route::middleware('auth:api')->group(function () {
         Route::post('token_user', [AuthController::class, 'token_user']);

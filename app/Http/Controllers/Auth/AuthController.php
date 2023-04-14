@@ -27,22 +27,21 @@ class AuthController extends Controller
             'account.unique' => '帳號已被使用',
             'email.unique' => '信箱已被使用',
         ]);
-        if ($validator->fails()) {
+        if ($validator->fails())
             return response()->json(['error' => $validator->errors()->first()], 402);
-        } else {
-            $user = User::create([
-                'name' => $data->name,
-                'account' => $data->account,
-                'email' => $data->email,
-                'password' => bcrypt($data->password),
-                'remember_token' => Str::random(10),
-                'pic_url' => 'https://code.bakerychu.com/api/default_user.png',
-                'cover_url' => 'https://code.bakerychu.com/api/default_cover.jpeg',
-                'intro' => "Hello! I'm " . $data->name . "!"
-            ]);
-            $token = $user->createToken('Laravel9PassportAuth')->accessToken;
-            return response()->json(['success' => $token], 200);
-        }
+
+        $user = User::create([
+            'name' => $data->name,
+            'account' => $data->account,
+            'email' => $data->email,
+            'password' => bcrypt($data->password),
+            'remember_token' => Str::random(10),
+            'pic_url' => 'https://code.bakerychu.com/api/default_user.png',
+            'cover_url' => 'https://code.bakerychu.com/api/default_cover.jpeg',
+            'intro' => "Hello! I'm " . $data->name . "!"
+        ]);
+        $token = $user->createToken('Laravel9PassportAuth')->accessToken;
+        return response()->json(['success' => $token], 200);
     }
 
     public function login(Request $data)
@@ -124,10 +123,47 @@ class AuthController extends Controller
                 'instagram' => $data->instagram,
                 'facebook' => $data->facebook,
             ]);
+
+            $validator = Validator::make($data->all(), [
+                'email' => 'required|email|unique:App\Models\User,email',
+            ], [
+                'required' => '欄位沒有填寫完整!',
+                'email.email' => '信箱格式錯誤',
+                'email.unique' => '信箱已被使用',
+            ]);
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()->first()], 402);
+            }
         }
         return response()->json(['user' => '更新成功'], 200);
     }
+    public function edit_password(Request $data)
+    {
+        $validator = Validator::make($data->all(), [
+            'account' => 'required|exists:App\Models\User,account',
+            'old_password' => 'required',
+            'password' => 'required',
+        ], [
+            'required' => '欄位沒有填寫完整!',
+            'account.exists' => '帳號不存在',
+        ]);
+        if ($validator->fails())
+            return response()->json(['error' => $validator->errors()->first()], 402);
 
+        $userdata = [
+            'account' => $data->account,
+            'password' => $data->old_password
+        ];
+
+        if (Auth::attempt($userdata)) {
+            Auth::user()->update([
+                'password' => bcrypt($data->password),
+            ]);
+            return response()->json(['user' => '更新成功'], 200);
+        } else {
+            return response()->json(['error' => '舊密碼錯誤'], 402);
+        }
+    }
     public function logout()
     {
         Auth::user()->token()->revoke();
