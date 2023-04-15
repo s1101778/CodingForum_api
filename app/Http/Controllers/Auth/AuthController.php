@@ -117,12 +117,6 @@ class AuthController extends Controller
                 ]);
             }
         } else {
-            Auth::user()->update([
-                'intro' => $data->intro,
-                'github' => $data->github,
-                'instagram' => $data->instagram,
-                'facebook' => $data->facebook,
-            ]);
 
             $validator = Validator::make($data->all(), [
                 'email' => 'required|email|unique:App\Models\User,email',
@@ -134,6 +128,14 @@ class AuthController extends Controller
             if ($validator->fails()) {
                 return response()->json(['error' => $validator->errors()->first()], 402);
             }
+            Auth::user()->update([
+                'name' => $data->name,
+                'email' => $data->email,
+                'intro' => $data->intro,
+                'github' => $data->github,
+                'instagram' => $data->instagram,
+                'facebook' => $data->facebook,
+            ]);
         }
         return response()->json(['user' => '更新成功'], 200);
     }

@@ -9,6 +9,9 @@ use App\Http\Controllers\UvaController;
 use App\Http\Controllers\GetLikeController;
 use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
+use App\Models\UvaTopic;
+use Illuminate\Http\Request;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -39,6 +42,7 @@ supervisorctl update
 php artisan schedule:list 
 */
 
+Route::get('proxy/get_uva_pdf/{serial}', [UvaController::class, 'get_uva_pdf']);
 
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
