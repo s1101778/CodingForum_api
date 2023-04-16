@@ -96,8 +96,16 @@ class AuthController extends Controller
                     'pic_url' => $data->pic_url,
                 ]);
             } else {
-                $filename = Auth::user()->account . '_userpic.jpeg';
-                $save_filename = 'https://code.bakerychu.com/api/uploads/userpic/' . Auth::user()->account . '_userpic.jpeg';
+                $files = scandir(public_path('uploads/userpic/'));
+
+                foreach ($files as $file) {
+                    if (strpos($file, Auth::user()->account . '_userpic') === 0) {
+                        unlink(public_path('uploads/userpic/') . DIRECTORY_SEPARATOR . $file);
+                    }
+                }
+
+                $filename = Auth::user()->account . '_userpic_' . time() . '.jpeg';
+                $save_filename = 'https://code.bakerychu.com/api/uploads/userpic/' . Auth::user()->account . '_userpic_' . time() . '.jpeg';
                 Image::make($data->pic_url)->resize(300, 300)->save(public_path('uploads/userpic/' . $filename));
                 Auth::user()->update([
                     'pic_url' => $save_filename,
@@ -109,8 +117,16 @@ class AuthController extends Controller
                     'cover_url' => $data->cover_url,
                 ]);
             } else {
-                $filename = Auth::user()->account . '_coverpic.jpeg';
-                $save_filename = 'https://code.bakerychu.com/api/uploads/coverpic/' . Auth::user()->account . '_coverpic.jpeg';
+                $files = scandir(public_path('uploads/coverpic/'));
+
+                foreach ($files as $file) {
+                    if (strpos($file, Auth::user()->account . '_coverpic') === 0) {
+                        unlink(public_path('uploads/coverpic/') . DIRECTORY_SEPARATOR . $file);
+                    }
+                }
+
+                $filename = Auth::user()->account . '_coverpic_' . time() . '.jpeg';
+                $save_filename = 'https://code.bakerychu.com/api/uploads/coverpic/' . Auth::user()->account . '_coverpic_' . time() . '.jpeg';
                 Image::make($data->cover_url)->resize(1500, 300)->save(public_path('uploads/coverpic/' . $filename));
                 Auth::user()->update([
                     'cover_url' => $save_filename,
