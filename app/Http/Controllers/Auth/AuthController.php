@@ -190,7 +190,7 @@ class AuthController extends Controller
 
     public function get_all_user()
     {
-        return response()->json(['success' => self::tidy_user(User::all())], 200);
+        return response()->json(['success' => User::all()], 200);
     }
     public function tidy_user($users)
     {
