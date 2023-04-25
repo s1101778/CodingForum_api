@@ -6,34 +6,47 @@ use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use App\Models\Post;
-use App\Models\User;
+use App\Models\Tags;
 use App\Models\UserLike;
-use Illuminate\Support\Facades\Cache;
 
 class GetTagController extends Controller
 {
-    public function get_tag(Request $data)
+    public function get_tags()
     {
-        // $validator = Validator::make($data->all(), [
-        //     'post_id' => 'required|exists:posts,id',
-        // ], [
-        //     'required' => '欄位沒有填寫完整!',
-        //     'post_id.exists' => '貼文不存在',
-        // ]);
-        // if ($validator->fails()) {
-        //     return response()->json(['error' => $validator->errors()->first()], 403);
-        // }
+        $tagscount = 0;
 
-        $user_post_like = UserLike::where([
-            'user_id' => Auth::user()->id,
-            'post_id' => $data->post_id
-        ])->whereNull('comment_id')->first()?->dislike_or_like;
+        $tags = Auth::user()->Taged->map(function ($item, $key) use (&$tagscount) {
+            if ($item['viewed'] == 0)
+                $tagscount++;
+            return collect([
+                'id' => $item['id'],
+                'comment_user_id' => $item['comment_user_id'],
+                'comment_user_name' => $item->Comment_User->name,
+                'comment_user_pic_url' => $item->Comment_User->pic_url,
+                'post_id' => $item['post_id'],
+                'post_uva_show' => $item->Post->UvaTopic->show,
+                'post_user_name' => $item->Post->User->name,
+                'comment_id' => $item['comment_id'],
+                'viewed' => $item['viewed'],
+                'created_at' => $item['created_at']->format('Y/m/d H:i:s'),
+                'updated_at' => $item['updated_at']->format('Y/m/d H:i:s'),
+            ]);
+        });
+        $tags = $tags->sortByDesc('created_at');
+        $tags = $tags->filter()->values();
 
-        $user_comment_like = UserLike::where([
-            'user_id' => Auth::user()->id,
-            'post_id' => $data->post_id
-        ])->whereNotNull('comment_id')->get();
-        return response()->json(['user_post_like' => $user_post_like, 'user_comment_like' => $user_comment_like], 200);
+        return response()->json(['count' => $tagscount, 'success' => $tags], 200);
+    }
+    public function tag_viewed(Request $data)
+    {
+        Tags::find($data->tag_id)->update(['viewed' => 1]);
+        return response()->json(['success' => 'success'], 200);
+    }
+    public function all_tag_view()
+    {
+        Auth::user()->Taged->map(function ($item, $key) {
+            Tags::find($item['id'])->update(['viewed' => 1]);
+        });
+        return response()->json(['success' => 'success'], 200);
     }
 }

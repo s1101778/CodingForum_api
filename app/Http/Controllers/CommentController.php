@@ -210,6 +210,26 @@ class CommentController extends Controller
 
         return response()->json(['success' => '更新喜歡狀態成功', 'user_comment_like' => $user_like?->dislike_or_like, 'now_comment_like' => $now_comment_like], 200);
     }
+    public function check_is_children_comment(Request $data)
+    {
+        if ($data->comment_id) {
+            $validator = Validator::make($data->all(), [
+                'comment_id' => 'exists:comments,id',
+            ], [
+                'comment_id.exists' => '評論不存在',
+            ]);
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()->first()], 402);
+            }
+
+            if (Comment::find($data->comment_id)->parent_comment_id != null) {
+
+                return response()->json(['success' => true, 'parent_comment_id' => Comment::find($data->comment_id)->parent_comment_id], 200);
+            } else { //不是子
+                return response()->json(['success' => false], 200);
+            }
+        }
+    }
     public function get_comment(Request $data)
     {
         $validator = Validator::make($data->all(), [
@@ -241,7 +261,7 @@ class CommentController extends Controller
             return response()->json(['error' => $validator->errors()->first()], 403);
         }
         $parent_comment_id = $data->parent_comment_id;
-        $children_comments = Comment::where('parent_comment_id', $parent_comment_id)->get()->sortBy('created_at')->sortByDesc('likes')->values();
+        $children_comments = Comment::where('parent_comment_id', $parent_comment_id)->get()->sortBy('created_at')->values();
 
         $children_comments = self::tidy_comment($children_comments);
         $children_comments = $children_comments->filter()->values(); //清null
@@ -265,7 +285,8 @@ class CommentController extends Controller
                 'content' => $item['content'],
                 'likes' => $item['likes'],
                 'children_comment_count' => $item['children_comment_count'],
-                'children_comments' => self::tidy_comment(Comment::where('parent_comment_id', $item['id'])->get()->sortBy('created_at')->sortByDesc('likes')->values()->take(3)),
+                // ->take(3)
+                'children_comments' => self::tidy_comment(Comment::where('parent_comment_id', $item['id'])->get()->sortBy('created_at')->values()),
                 'mention' => $mention,
                 'mention_name' => $mention_name,
                 'created_at' => $item['created_at']->format('Y/m/d H:i:s'),

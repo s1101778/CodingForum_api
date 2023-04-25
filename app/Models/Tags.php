@@ -9,4 +9,16 @@ class Tags extends Model
 {
     use HasFactory;
     protected $guarded = [];
+    public function Comment_User()
+    {
+        return $this->belongsTo(User::class, 'comment_user_id', 'id');
+    }
+    public function Taged_User()
+    {
+        return $this->belongsTo(User::class, 'Taged_user_id', 'id');
+    }
+    public function Post()
+    {
+        return $this->belongsTo(Post::class);
+    }
 }

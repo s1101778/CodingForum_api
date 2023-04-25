@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\UvaController;
 use App\Http\Controllers\GetLikeController;
 use App\Http\Controllers\TestController;
+use App\Http\Controllers\GetTagController;
 use Illuminate\Support\Facades\Route;
 use App\Models\UvaTopic;
 use Illuminate\Http\Request;
@@ -71,11 +72,15 @@ Route::prefix('forum')->group(function () {
         Route::post('like_comment', [CommentController::class, 'like_comment']);
         Route::post('del_comment', [CommentController::class, 'del_comment']);
         Route::post('get_like', [GetLikeController::class, 'get_like']);
+        Route::post('get_tags', [GetTagController::class, 'get_tags']);
+        Route::post('all_tag_view', [GetTagController::class, 'all_tag_view']);
     });
     Route::get('get_uva', [UvaController::class, 'get_uva']);
     Route::post('get_post', [PostController::class, 'get_post']);
     Route::post('get_comment', [CommentController::class, 'get_comment']);
     Route::post('get_children_comment', [CommentController::class, 'get_children_comment']);
+    Route::post('check_is_children_comment', [CommentController::class, 'check_is_children_comment']);
+    Route::post('tag_viewed', [GetTagController::class, 'tag_viewed']);
 });
 
 Route::get('sendmail', [PostController::class, 'post']);

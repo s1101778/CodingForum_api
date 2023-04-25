@@ -57,6 +57,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserLike::class);
     }
+    public function Taged()
+    {
+        return $this->hasMany(Tags::class, 'Taged_user_id', 'id');
+    }
+
     // public static function get_user_name($id)
     // {
     //     return User::find($id)->name;
