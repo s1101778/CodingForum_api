@@ -133,16 +133,17 @@ class AuthController extends Controller
                 ]);
             }
         } else {
-
-            $validator = Validator::make($data->all(), [
-                'email' => 'required|email|unique:App\Models\User,email',
-            ], [
-                'required' => '欄位沒有填寫完整!',
-                'email.email' => '信箱格式錯誤',
-                'email.unique' => '信箱已被使用',
-            ]);
-            if ($validator->fails()) {
-                return response()->json(['error' => $validator->errors()->first()], 402);
+            if (Auth::user()->email != $data->email) {
+                $validator = Validator::make($data->all(), [
+                    'email' => 'required|email|unique:App\Models\User,email',
+                ], [
+                    'required' => '欄位沒有填寫完整!',
+                    'email.email' => '信箱格式錯誤',
+                    'email.unique' => '信箱已被使用',
+                ]);
+                if ($validator->fails()) {
+                    return response()->json(['error' => $validator->errors()->first()], 402);
+                }
             }
             Auth::user()->update([
                 'name' => $data->name,
