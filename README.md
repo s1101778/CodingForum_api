@@ -12,17 +12,20 @@
 DB_DATABASE=CodingForum
 DB_HOST=db
 
-create table name CodingForum
-
+---------------------
+## After WebServer ready
 mysql -u root -p
+
+create database CodingForum;
+show databases;
 grant all privileges on *.* to 'puforumcoding'@'%' IDENTIFIED BY 'puforumcoding';
 
 2.Mail
 
-5. cd /var/www/CodingForum_api
-6. php artisan config:clear
-7. php artisan key:generate
-8. php artisan migrate
-9. php artisan passport:install
-10. php artisan db:seed --class=UvaTopicTableSeeder
+1. cd /var/www/CodingForum_api
+2. php artisan config:clear
+3. php artisan key:generate
+4. php artisan migrate
+5. php artisan passport:install --force
+6. php artisan db:seed --class=UvaTopicTableSeeder
 
