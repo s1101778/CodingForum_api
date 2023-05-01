@@ -11,6 +11,9 @@
 1.DB  
 DB_DATABASE=CodingForum
 DB_HOST=db
+
+create table name CodingForum
+
 mysql -u root -p
 grant all privileges on *.* to 'puforumcoding'@'%' IDENTIFIED BY 'puforumcoding';
 
