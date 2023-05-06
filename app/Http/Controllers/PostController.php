@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Cache;
 
 class PostController extends Controller
 {
+    public function user_post_check(Request $data)
+    {
+        return response()->json(['check' => Post::find($data->post_id)->user_id == Auth::user()->id], 200);
+    }
     public function post(Request $data)
     {
         $validator = Validator::make($data->all(), [
