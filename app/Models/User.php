@@ -22,12 +22,13 @@ class User extends Authenticatable
         'account',
         'email',
         'password',
-        'pic_url',
-        'cover_url',
+        'picture',
+        'cover',
         'intro',
         'github',
         'instagram',
         'facebook',
+        'isadmin'
     ];
 
     /**
@@ -45,10 +46,12 @@ class User extends Authenticatable
      *
      * @var array<string, string>
      */
+
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'created_at' => 'datetime:Y/m/d H:i:s',
+        'updated_at' => 'datetime:Y/m/d H:i:s',
     ];
-
     public function Post()
     {
         return $this->hasMany(Post::class);
@@ -60,6 +63,15 @@ class User extends Authenticatable
     public function Taged()
     {
         return $this->hasMany(Tags::class, 'Taged_user_id', 'id');
+    }
+    public function UserClass()
+    {
+        return $this->hasMany(UserClass::class);
+    }
+
+    public function TeacherClass()
+    {
+        return $this->hasMany(TeacherClass::class);
     }
 
     // public static function get_user_name($id)
