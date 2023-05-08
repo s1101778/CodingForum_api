@@ -4,7 +4,9 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\PostController;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Class\UserClassController;
+use App\Http\Controllers\Class\ClassAssignmentController;
+use App\Http\Controllers\Class\TeacherClassController;
 use App\Http\Controllers\UvaController;
 use App\Http\Controllers\GetLikeController;
 use App\Http\Controllers\TestController;
@@ -44,6 +46,24 @@ php artisan schedule:list
 */
 
 Route::get('proxy/get_uva_pdf/{serial}', [UvaController::class, 'get_uva_pdf']);
+Route::prefix('class')->middleware('auth:api')->group(function () {
+    Route::post('get_user_class', [UserClassController::class, 'get_user_class']);
+    Route::post('user_class', [UserClassController::class, 'user_class']);
+    Route::post('del_user_class', [UserClassController::class, 'del_user_class']);
+
+    Route::post('get_coding_class', [UserClassController::class, 'get_coding_class']);
+
+    Route::prefix('admin')->group(function () {
+
+        Route::post('get_teacher_class', [TeacherClassController::class, 'get_teacher_class']);
+        Route::post('teacher_class', [TeacherClassController::class, 'teacher_class']);
+        Route::post('del_teacher_class', [TeacherClassController::class, 'del_teacher_class']);
+
+        Route::post('get_assignment', [ClassAssignmentController::class, 'get_assignment']);
+        Route::post('assignment', [ClassAssignmentController::class, 'assignment']);
+        Route::post('del_assignment', [ClassAssignmentController::class, 'del_assignment']);
+    });
+});
 
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
@@ -52,6 +72,9 @@ Route::prefix('auth')->group(function () {
     Route::get('get_all_user', [AuthController::class, 'get_all_user']);
     Route::post('edit_password', [AuthController::class, 'edit_password']);
 
+    Route::prefix('check')->middleware('auth:api')->group(function () {
+        Route::post('isadmin', [AuthController::class, 'isadmin']);
+    });
     Route::middleware('auth:api')->group(function () {
         Route::post('token_user', [AuthController::class, 'token_user']);
         Route::post('edit_user', [AuthController::class, 'edit_user']);
@@ -64,6 +87,9 @@ Route::prefix('auth')->group(function () {
     });
 });
 Route::prefix('forum')->group(function () {
+    Route::prefix('check')->middleware('auth:api')->group(function () {
+        Route::post('user_post_check', [PostController::class, 'user_post_check']);
+    });
     Route::middleware('auth:api')->group(function () {
         Route::post('post', [PostController::class, 'post']);
         Route::post('like_post', [PostController::class, 'like_post']);

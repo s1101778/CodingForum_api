@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
+    public function isadmin()
+    {
+        return response()->json(['check' => Auth::user()->isadmin], 200);
+    }
     public function register(Request $data)
     {
         $validator = Validator::make($data->all(), [
@@ -36,8 +40,8 @@ class AuthController extends Controller
             'email' => $data->email,
             'password' => bcrypt($data->password),
             'remember_token' => Str::random(10),
-            'pic_url' => 'https://code.bakerychu.com/api/default_user.png',
-            'cover_url' => 'https://code.bakerychu.com/api/default_cover.jpeg',
+            'picture' => 'default_user.png',
+            'cover' => 'default_cover.jpeg',
             'intro' => "Hello! I'm " . $data->name . "!"
         ]);
         $token = $user->createToken('Laravel9PassportAuth')->accessToken;
@@ -90,10 +94,10 @@ class AuthController extends Controller
     }
     public function edit_user(Request $data)
     {
-        if ($data->pic_url) {
+        if ($data->picture) {
             if ($data->reset == 1) {
                 Auth::user()->update([
-                    'pic_url' => $data->pic_url,
+                    'picture' => $data->picture,
                 ]);
             } else {
                 $files = scandir(public_path('uploads/userpic/'));
@@ -105,16 +109,16 @@ class AuthController extends Controller
                 }
 
                 $filename = Auth::user()->account . '_userpic_' . time() . '.jpeg';
-                $save_filename = 'https://code.bakerychu.com/api/uploads/userpic/' . Auth::user()->account . '_userpic_' . time() . '.jpeg';
-                Image::make($data->pic_url)->resize(300, 300)->save(public_path('uploads/userpic/' . $filename));
+                $save_filename =  Auth::user()->account . '_userpic_' . time() . '.jpeg';
+                Image::make($data->picture)->resize(300, 300)->save(public_path('uploads/userpic/' . $filename));
                 Auth::user()->update([
-                    'pic_url' => $save_filename,
+                    'picture' => $save_filename,
                 ]);
             }
-        } else  if ($data->cover_url) {
+        } else  if ($data->cover) {
             if ($data->reset == 1) {
                 Auth::user()->update([
-                    'cover_url' => $data->cover_url,
+                    'cover' => $data->cover,
                 ]);
             } else {
                 $files = scandir(public_path('uploads/coverpic/'));
@@ -126,10 +130,10 @@ class AuthController extends Controller
                 }
 
                 $filename = Auth::user()->account . '_coverpic_' . time() . '.jpeg';
-                $save_filename = 'https://code.bakerychu.com/api/uploads/coverpic/' . Auth::user()->account . '_coverpic_' . time() . '.jpeg';
-                Image::make($data->cover_url)->resize(1500, 300)->save(public_path('uploads/coverpic/' . $filename));
+                $save_filename =  Auth::user()->account . '_coverpic_' . time() . '.jpeg';
+                Image::make($data->cover)->resize(1500, 300)->save(public_path('uploads/coverpic/' . $filename));
                 Auth::user()->update([
-                    'cover_url' => $save_filename,
+                    'cover' => $save_filename,
                 ]);
             }
         } else {

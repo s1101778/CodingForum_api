@@ -247,7 +247,7 @@ class PostController extends Controller
             'user_id' => $item['user_id'],
             'user_account' => $item->User->account,
             'user_name' => $item->User->name,
-            'user_pic_url' => $item->User->pic_url,
+            'user_picture' => $item->User->picture,
             'uva_topic' => $item->UvaTopic,
             'video_url' => $item['video_url'],
             'video_id' => $item['video_id'],

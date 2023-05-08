@@ -22,7 +22,7 @@ class GetTagController extends Controller
                 'id' => $item['id'],
                 'comment_user_id' => $item['comment_user_id'],
                 'comment_user_name' => $item->Comment_User->name,
-                'comment_user_pic_url' => $item->Comment_User->pic_url,
+                'comment_user_picture' => $item->Comment_User->picture,
                 'post_id' => $item['post_id'],
                 'post_uva_show' => $item->Post->UvaTopic->show,
                 'post_user_name' => $item->Post->User->name,
