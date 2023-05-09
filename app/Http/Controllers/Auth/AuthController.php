@@ -97,7 +97,7 @@ class AuthController extends Controller
         if ($data->picture) {
             if ($data->reset == 1) {
                 Auth::user()->update([
-                    'picture' => $data->picture,
+                    'picture' => 'uploads/userpic/default_user.png',
                 ]);
             } else {
                 $files = scandir(public_path('uploads/userpic/'));
@@ -108,7 +108,7 @@ class AuthController extends Controller
                     }
                 }
 
-                $filename = Auth::user()->account . '_userpic_' . time() . '.jpeg';
+                $filename = 'uploads/userpic/' . Auth::user()->account . '_userpic_' . time() . '.jpeg';
                 $save_filename =  Auth::user()->account . '_userpic_' . time() . '.jpeg';
                 Image::make($data->picture)->resize(300, 300)->save(public_path('uploads/userpic/' . $filename));
                 Auth::user()->update([
@@ -118,7 +118,7 @@ class AuthController extends Controller
         } else  if ($data->cover) {
             if ($data->reset == 1) {
                 Auth::user()->update([
-                    'cover' => $data->cover,
+                    'cover' => 'uploads/coverpic/default_cover.jpeg',
                 ]);
             } else {
                 $files = scandir(public_path('uploads/coverpic/'));
@@ -130,7 +130,7 @@ class AuthController extends Controller
                 }
 
                 $filename = Auth::user()->account . '_coverpic_' . time() . '.jpeg';
-                $save_filename =  Auth::user()->account . '_coverpic_' . time() . '.jpeg';
+                $save_filename = 'uploads/coverpic/' . Auth::user()->account . '_coverpic_' . time() . '.jpeg';
                 Image::make($data->cover)->resize(1500, 300)->save(public_path('uploads/coverpic/' . $filename));
                 Auth::user()->update([
                     'cover' => $save_filename,
