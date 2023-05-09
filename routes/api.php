@@ -57,7 +57,7 @@ Route::prefix('class')->middleware('auth:api')->group(function () {
 
     Route::post('get_coding_class', [UserClassController::class, 'get_coding_class']);
 
-    Route::prefix('admin')->group(function () {
+    Route::prefix('admin')->middleware('isAdmin')->group(function () {
 
         Route::post('get_teacher_class', [TeacherClassController::class, 'get_teacher_class']);
         Route::post('teacher_class', [TeacherClassController::class, 'teacher_class']);
