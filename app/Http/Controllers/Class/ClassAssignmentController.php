@@ -31,7 +31,7 @@ class ClassAssignmentController extends Controller
             !$handinassignment->getTeacherClass_TA_user_ids()->contains(Auth::user()->id) &&
             !$handinassignment->getUserClass_user_ids()->contains(Auth::user()->id)
         )
-            return response()->json(['error' => '權限不符，並非課程教授、TA、學生'], 402);
+            return response()->json(['error' => '權限不符，並非此課程教授、TA、學生'], 402);
 
         return response()->json(['success' => $handinassignment], 200);
     }
@@ -89,7 +89,7 @@ class ClassAssignmentController extends Controller
             !$codingclass->getTeacherClass_TA_user_ids()->contains(Auth::user()->id) &&
             !$codingclass->getUserClass_user_ids()->contains(Auth::user()->id)
         )
-            return response()->json(['error' => '權限不符，並非課程教授、TA、學生'], 402);
+            return response()->json(['error' => '權限不符，並非此課程教授、TA、學生'], 402);
 
         $assignment = $codingclass->Assignment;
         if ($data->assignment_id)
@@ -120,7 +120,7 @@ class ClassAssignmentController extends Controller
         }
 
         if (CodingClass::find($data->coding_class_id)->getTeacherClass_Teacher_user_id() != Auth::user()->id)
-            return response()->json(['error' => '權限不符，並非課程教授'], 402);
+            return response()->json(['error' => '權限不符，並非此課程教授'], 402);
 
         $match = ['id' => $data->assignment_id];
         $assignment = Assignment::updateOrCreate($match, [
@@ -148,7 +148,7 @@ class ClassAssignmentController extends Controller
             return response()->json(['error' => $validator->errors()->first()], 402);
         }
         if (Assignment::find($data->assignment_id)->getTeacherClass_Teacher_user_id() != Auth::user()->id)
-            return response()->json(['error' => '權限不符，並非課程教授'], 402);
+            return response()->json(['error' => '權限不符，並非此課程教授'], 402);
 
         Assignment::find($data->assignment_id)->delete();
         return response()->json(['success' => '成功刪除作業'], 200);

@@ -33,7 +33,6 @@ class CodingClass extends Model
     {
         return $this->hasMany(TeacherClass::class)->where('user_type', 2);
     }
-
     public function getTeacherClass_Teacher_user_id()
     {
         return $this->TeacherClass_Teacher->first()->user_id;

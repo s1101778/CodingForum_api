@@ -18,9 +18,11 @@ class UserClassController extends Controller
     {
         $coding_class = CodingClass::all()->map(function ($item, $key) {
             $item->is_take = Auth::user()->UserClass->where('coding_class_id', $item->id)->count();
-            $item->teacher_account = CodingClass::find($item->id)->TeacherClass_Teacher->first()->User->account;
-            $item->teacher_name = CodingClass::find($item->id)->TeacherClass_Teacher->first()->User->name;
-            $item->TA_user_ids = CodingClass::find($item->id)->TeacherClass_TA->pluck('user_id');
+            $codingclass = CodingClass::find($item->id);
+
+            $item->teacher_account = $codingclass->TeacherClass_Teacher->first()->User->account;
+            $item->teacher_name = $codingclass->TeacherClass_Teacher->first()->User->name;
+            $item->TA_user_ids = $codingclass->getTeacherClass_TA_user_ids();
             return $item;
         });
         return response()->json(['success' => $coding_class], 200);
@@ -30,9 +32,11 @@ class UserClassController extends Controller
 
         $userclass = Auth::user()->UserClass->map(function ($item, $key) {
             $item = $item->CodingClass;
-            $item->teacher_account = CodingClass::find($item->id)->TeacherClass_Teacher->first()->User->account;
-            $item->teacher_name = CodingClass::find($item->id)->TeacherClass_Teacher->first()->User->name;
-            $item->TA_user_ids = CodingClass::find($item->id)->TeacherClass_TA->pluck('user_id');
+            $codingclass = CodingClass::find($item->id);
+
+            $item->teacher_account = $codingclass->TeacherClass_Teacher->first()->User->account;
+            $item->teacher_name = $codingclass->TeacherClass_Teacher->first()->User->name;
+            $item->TA_user_ids = $codingclass->getTeacherClass_TA_user_ids();
             return $item;
         });
 
@@ -73,7 +77,8 @@ class UserClassController extends Controller
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 402);
         }
-        $userclass = UserClass::where(['user_id' => Auth::user()->id, 'coding_class_id' => $data->coding_class_id]);
+        $userclass = Auth::user()->UserClass->where('coding_class_id', $data->coding_class_id);
+
         if ($userclass->exists()) {
             $userclass->delete();
             CodingClass::find($data->coding_class_id)->decrement('student_count');
