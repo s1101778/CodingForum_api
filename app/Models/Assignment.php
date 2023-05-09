@@ -21,12 +21,20 @@ class Assignment extends Model
     {
         return $this->hasMany(Post::class);
     }
-    public static function GetTeacherId($assignment_id)
-    {
-        return Assignment::find($assignment_id)->CodingClass->TeacherClass_Teacher->user_id;
-    }
     public function HandInAssignment()
     {
         return $this->hasMany(HandInAssignment::class);
+    }
+    public function getTeacherClass_Teacher_user_id()
+    {
+        return $this->CodingClass->TeacherClass_Teacher->first()->user_id;
+    }
+    public function getTeacherClass_TA_user_ids()
+    {
+        return $this->CodingClass->TeacherClass_TA->pluck('user_id');
+    }
+    public function getUserClass_user_ids()
+    {
+        return $this->CodingClass->UserClass->pluck('user_id');
     }
 }
