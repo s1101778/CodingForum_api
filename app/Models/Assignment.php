@@ -25,4 +25,8 @@ class Assignment extends Model
     {
         return Assignment::find($assignment_id)->CodingClass->TeacherClass_Teacher->user_id;
     }
+    public function HandInAssignment()
+    {
+        return $this->hasMany(HandInAssignment::class);
+    }
 }

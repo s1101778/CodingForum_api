@@ -73,9 +73,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(TeacherClass::class);
     }
-
-    // public static function get_user_name($id)
-    // {
-    //     return User::find($id)->name;
-    // }
+    public function HandInAssignment()
+    {
+        return $this->hasMany(HandInAssignment::class);
+    }
 }
