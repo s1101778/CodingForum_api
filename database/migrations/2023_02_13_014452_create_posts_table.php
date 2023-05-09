@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+use App\Models\UvaTopic;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -15,8 +17,8 @@ return new class extends Migration
     {
         Schema::create('posts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade')->comment('外鍵_使用者ID');
-            $table->foreignId('uva_topic_id')->constrained()->onDelete('cascade')->comment('外鍵_題目ID');
+            $table->foreignIdFor(User::class)->constrained()->onDelete('cascade')->comment('外鍵_使用者ID');
+            $table->foreignIdFor(UvaTopic::class)->constrained()->onDelete('cascade')->comment('外鍵_題目ID');
             $table->text('video_url');
             $table->text('content');
             $table->unsignedInteger('likes')->default(0);
