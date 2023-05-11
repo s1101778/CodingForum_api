@@ -95,40 +95,41 @@ class AuthController extends Controller
     public function edit_user(Request $data)
     {
         if ($data->picture) {
+
+            //移除舊的
+            $files = scandir(public_path('uploads/userpic/'));
+            foreach ($files as $file) {
+                if (strpos($file, Auth::user()->account . '_userpic') === 0) {
+                    unlink(public_path('uploads/userpic/') . DIRECTORY_SEPARATOR . $file);
+                }
+            }
+
             if ($data->reset == 1) {
                 Auth::user()->update([
                     'picture' => 'uploads/userpic/default_user.png',
                 ]);
             } else {
-                $files = scandir(public_path('uploads/userpic/'));
-
-                foreach ($files as $file) {
-                    if (strpos($file, Auth::user()->account . '_userpic') === 0) {
-                        unlink(public_path('uploads/userpic/') . DIRECTORY_SEPARATOR . $file);
-                    }
-                }
-
-                $filename = 'uploads/userpic/' . Auth::user()->account . '_userpic_' . time() . '.jpeg';
-                $save_filename =  Auth::user()->account . '_userpic_' . time() . '.jpeg';
+                $filename = Auth::user()->account . '_userpic_' . time() . '.jpeg';
+                $save_filename = 'uploads/userpic/' .  Auth::user()->account . '_userpic_' . time() . '.jpeg';
                 Image::make($data->picture)->resize(300, 300)->save(public_path('uploads/userpic/' . $filename));
                 Auth::user()->update([
                     'picture' => $save_filename,
                 ]);
             }
         } else  if ($data->cover) {
+            //移除舊的
+            $files = scandir(public_path('uploads/coverpic/'));
+            foreach ($files as $file) {
+                if (strpos($file, Auth::user()->account . '_coverpic') === 0) {
+                    unlink(public_path('uploads/coverpic/') . DIRECTORY_SEPARATOR . $file);
+                }
+            }
+
             if ($data->reset == 1) {
                 Auth::user()->update([
                     'cover' => 'uploads/coverpic/default_cover.jpeg',
                 ]);
             } else {
-                $files = scandir(public_path('uploads/coverpic/'));
-
-                foreach ($files as $file) {
-                    if (strpos($file, Auth::user()->account . '_coverpic') === 0) {
-                        unlink(public_path('uploads/coverpic/') . DIRECTORY_SEPARATOR . $file);
-                    }
-                }
-
                 $filename = Auth::user()->account . '_coverpic_' . time() . '.jpeg';
                 $save_filename = 'uploads/coverpic/' . Auth::user()->account . '_coverpic_' . time() . '.jpeg';
                 Image::make($data->cover)->resize(1500, 300)->save(public_path('uploads/coverpic/' . $filename));

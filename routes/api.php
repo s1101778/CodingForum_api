@@ -47,6 +47,8 @@ php artisan schedule:list
 
 Route::get('proxy/get_uva_pdf/{serial}', [UvaController::class, 'get_uva_pdf']);
 Route::prefix('class')->middleware('auth:api')->group(function () {
+    Route::post('upload_file', [ClassAssignmentController::class, 'upload_file']);
+    Route::post('delete_file', [ClassAssignmentController::class, 'delete_file']);
     Route::post('get_hand_in_assignment', [ClassAssignmentController::class, 'get_hand_in_assignment']);
     Route::post('hand_in_assignment', [ClassAssignmentController::class, 'hand_in_assignment']);
     Route::post('get_assignment', [ClassAssignmentController::class, 'get_assignment']);
@@ -114,9 +116,9 @@ Route::prefix('forum')->group(function () {
 
 Route::get('sendmail', [PostController::class, 'post']);
 
-Route::prefix('test')->group(function () {
+Route::prefix('test')->middleware('auth:api')->group(function () {
     Route::post('test1', [TestController::class, 'test1']);
-    Route::get('test2', [TestController::class, 'test2']);
+    Route::post('test2', [TestController::class, 'test2']);
     Route::get('test3', [TestController::class, 'test3']);
     Route::get('test4', [TestController::class, 'test4']);
 });

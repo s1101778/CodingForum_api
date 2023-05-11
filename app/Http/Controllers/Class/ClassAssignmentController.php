@@ -13,6 +13,60 @@ use Carbon\Carbon;
 
 class ClassAssignmentController extends Controller
 {
+    public function upload_file(Request $data)
+    {
+        $assignment = Assignment::find($data->assignment_id);
+
+        if (!$assignment->getUserClass_user_ids()->contains(Auth::user()->id))
+            return response()->json(['error' => '權限不符，並非課程學生'], 402);
+
+        $now = Carbon::now();
+        if ($now->isBefore($assignment->start_at) || $now->isAfter($assignment->end_at))
+            return response()->json(['error' => '不在繳交作業的期限內'], 402);
+
+
+        $file = $data->file('file');
+
+        $filename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = $file->getClientOriginalExtension();
+
+        $final_file = $filename . '.' . $extension;
+
+        $directory = public_path('uploads/assignment/' . $data->assignment_id . '/' . Auth::user()->account);
+
+        if (!file_exists($directory)) {
+            mkdir($directory, 0755, true);
+            chown($directory, 'www-data');
+        }
+
+        $file->move($directory, $final_file);
+
+        return response()->json(['message' => 'success add'], 200);
+    }
+    public function delete_file(Request $data)
+    {
+        $assignment = Assignment::find($data->assignment_id);
+
+        if (!$assignment->getUserClass_user_ids()->contains(Auth::user()->id))
+            return response()->json(['error' => '權限不符，並非課程學生'], 402);
+
+        $now = Carbon::now();
+        if ($now->isBefore($assignment->start_at) || $now->isAfter($assignment->end_at))
+            return response()->json(['error' => '不在繳交作業的期限內'], 402);
+
+        $files = scandir(public_path('uploads/assignment/' . $data->assignment_id . '/' . Auth::user()->account));
+        $file_count = count($files) - 2;
+        foreach ($files as $file) {
+            if (strpos($file, $data->file_name) === 0) {
+                unlink(public_path('uploads/assignment/' . $data->assignment_id . '/' . Auth::user()->account) . DIRECTORY_SEPARATOR . $file);
+            }
+        }
+        if ($file_count - 1 == 0) {
+            rmdir(public_path('uploads/assignment/' . $data->assignment_id . '/' . Auth::user()->account));
+        }
+
+        return response()->json(['success' => 'success delete', 'test' => $file_count], 200);
+    }
     public function get_hand_in_assignment(Request $data)
     {
         $validator = Validator::make($data->all(), [
@@ -24,15 +78,16 @@ class ClassAssignmentController extends Controller
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 402);
         }
-        $handinassignment = HandInAssignment::find($data->hand_in_assignment_id)->Assignment;
+        $handinassignment = HandInAssignment::find($data->hand_in_assignment_id);
 
         if (
-            $handinassignment->getTeacherClass_Teacher_user_id() != Auth::user()->id &&
-            !$handinassignment->getTeacherClass_TA_user_ids()->contains(Auth::user()->id) &&
-            !$handinassignment->getUserClass_user_ids()->contains(Auth::user()->id)
+            $handinassignment->Assignment->getTeacherClass_Teacher_user_id() != Auth::user()->id &&
+            !$handinassignment->Assignment->getTeacherClass_TA_user_ids()->contains(Auth::user()->id) &&
+            !$handinassignment->Assignment->getUserClass_user_ids()->contains(Auth::user()->id)
         )
             return response()->json(['error' => '權限不符，並非此課程教授、TA、學生'], 402);
 
+        $handinassignment = $handinassignment->fresh();
         return response()->json(['success' => $handinassignment], 200);
     }
 
@@ -40,9 +95,11 @@ class ClassAssignmentController extends Controller
     {
         $validator = Validator::make($data->all(), [
             'assignment_id' => 'required|exists:assignments,id',
-            'hand_in_assignment_id' => 'exists:hand_in_assignments,id',
+            'hand_in_assignment_id' => 'nullable|exists:hand_in_assignments,id',
+            'post_id' => 'nullable|exists:posts,id',
         ], [
             'required' => '欄位沒有填寫完整!',
+            'post_id.exists' => '貼文不存在',
             'assignment_id.exists' => '作業不存在',
             'hand_in_assignment_id.exists' => '繳交的作業不存在',
         ]);
@@ -56,15 +113,23 @@ class ClassAssignmentController extends Controller
 
         $now = Carbon::now();
         if ($now->isBefore($assignment->start_at) || $now->isAfter($assignment->end_at))
-            return response()->json(['error' => '不在繳交作業的期限內', 'time' => time()], 402);
+            return response()->json(['error' => '不在繳交作業的期限內'], 402);
 
-        $match = ['id' => $data->hand_in_assignment_id];
+        if ($data->post_id && Auth::user()->Post->pluck('id')->doesntContain($data->post_id))
+            return response()->json(['error' => '此貼文並非您發布，請重新輸入'], 402);
+
+        if ($data->hand_in_assignment_id)
+            $match = ['id' => $data->hand_in_assignment_id];
+        else
+            $match = ['user_id' => Auth::user()->id, 'assignment_id' => $data->assignment_id];
+
         $hand_in_assignment = HandInAssignment::updateOrCreate($match, [
             'user_id' => Auth::user()->id,
             'assignment_id' => $data->assignment_id,
             'post_id' => $data->post_id,
             'file' => $data->file,
         ]);
+
         if ($hand_in_assignment->wasRecentlyCreated)
             return response()->json(['success' => '成功繳交作業'], 200);
         else
@@ -92,11 +157,19 @@ class ClassAssignmentController extends Controller
             return response()->json(['error' => '權限不符，並非此課程教授、TA、學生'], 402);
 
         $assignment = $codingclass->Assignment;
-        if ($data->assignment_id)
+        $now = Carbon::now();
+
+        if ($data->assignment_id) {
             $assignment = $assignment->where('id', $data->assignment_id)->first();
-        else {
-            $assignment->map(function ($item, $key) {
+            if (!$assignment)
+                return response()->json(['error' => '此作業並非此課程'], 402);
+
+            $assignment->hand_in_assignment_id = Auth::user()->HandInAssignment->firstWhere('assignment_id', $data->assignment_id)?->id;
+            $assignment->in_time = $now->isAfter($assignment->start_at) && $now->isBefore($assignment->end_at);
+        } else {
+            $assignment->map(function ($item, $key) use ($now) {
                 $item->hand_in_assignment_id = Auth::user()->HandInAssignment->firstWhere('assignment_id', $item->id)?->id;
+                $item->in_time = $now->isAfter($item->start_at) && $now->isBefore($item->end_at);
                 return $item;
             });
         }

@@ -7,29 +7,24 @@ use Illuminate\Http\Request;
 use App\Models\Comment;
 use App\Models\User;
 use App\Models\Assignment;
+use App\Models\HandInAssignment;
 use Illuminate\Support\Facades\DB;
 use voku\helper\HtmlDomParser;
+use Illuminate\Support\Facades\Auth;
 
 class TestController extends Controller
 {
 
     public function test1(Request $data)
     {
-        return response()->json(['success' => Assignment::GetTeacherId(1)], 200);
     }
 
-    public function test2()
+    public function test2(Request $data)
     {
-        $children_comments = Comment::where('parent_comment_id', 2)->orderBy('likes', 'DESC')->orderBy('created_at', 'DESC')->cursorPaginate(2);
-        $next_cursor = $children_comments->toArray()['next_cursor'];
-
-        $children_comments = self::tidy_comment($children_comments, $next_cursor);
-
-        return response()->json(['success' => $children_comments], 200);
     }
     public function test3()
     {
-        return response()->json(['success' => 'success'], 200);
+        return response()->json(['success' => HandInAssignment::find(7)], 200);
     }
     public function test4()
     {
