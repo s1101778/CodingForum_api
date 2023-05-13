@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
 
 class TeacherClassController extends Controller
 {
@@ -32,12 +33,17 @@ class TeacherClassController extends Controller
                 return response()->json(['error' => '權限不符，並非此課程教授'], 402);
 
             $TeacherClass = $codingclass->fresh();
-
             $TeacherClass->TA_user_ids = $codingclass->getTeacherClass_TA_user_ids();
+            $TeacherClass->user = $codingclass->UserClass->pluck('User')->map->only(['id', 'name', 'account']);
         } else {
             $TeacherClass = Auth::user()->TeacherClass->map(function ($item, $key) {
                 $item = $item->CodingClass;
-                $item->TA_user_ids = CodingClass::find($item->id)->getTeacherClass_TA_user_ids();
+                $codingclass = CodingClass::find($item->id);
+
+                $item->TA_user_ids = $codingclass->getTeacherClass_TA_user_ids();
+
+                $item->user = $codingclass->UserClass->pluck('User')->map->only(['id', 'name', 'account']);
+
                 return $item;
             });
         }
@@ -63,6 +69,8 @@ class TeacherClassController extends Controller
         $coding_class = CodingClass::updateOrCreate($match, [
             'school_year' => $data->school_year,
             'name' => $data->name,
+            'enable' => $data->enable
+
         ]);
 
         TeacherClass::firstOrCreate([
@@ -105,7 +113,9 @@ class TeacherClassController extends Controller
     {
         $validator = Validator::make($data->all(), [
             'coding_class_id' => 'required|exists:coding_classes,id',
+            'check' => 'required'
         ], [
+            'check.required' => '未填入確認刪除字樣',
             'required' => '欄位沒有填寫完整!',
             'coding_class_id.exists' => '課程不存在',
         ]);
@@ -113,7 +123,11 @@ class TeacherClassController extends Controller
             return response()->json(['error' => $validator->errors()->first()], 402);
         }
         if (Auth::user()->id != TeacherClass::firstWhere(['coding_class_id' => $data->coding_class_id, 'user_type' => 1])->user_id)
-            return response()->json(['error' => '權限不符'], 402);
+            return response()->json(['error' => '權限不符,並非課程教授'], 402);
+
+        $codingclass = CodingClass::find($data->coding_class_id);
+        if ($data->check != '確認刪除' . $codingclass->school_year . '_' . $codingclass->name)
+            return response()->json(['error' => '確認字樣不同 請重新輸入'], 402);
 
         $oldTAs_id = CodingClass::find($data->coding_class_id)->getTeacherClass_TA_user_ids(); //原本TA
         $oldTAs_id->map(function ($oldTA_user_id, $key) use ($data) {
@@ -122,6 +136,13 @@ class TeacherClassController extends Controller
                 User::find($oldTA_user_id)->update(['isadmin' => 0]); //TeacherClass 沒紀錄 取消TA
             }
         });
+
+        $codingclass_assignment = CodingClass::find($data->coding_class_id)->Assignment->pluck('id');
+
+        $codingclass_assignment->map(function ($id) {
+            Storage::deleteDirectory('uploads/assignment/' . $id);
+        });
+
         CodingClass::find($data->coding_class_id)->delete();
         return response()->json(['success' => '成功刪除課程'], 200);
     }

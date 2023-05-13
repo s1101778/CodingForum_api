@@ -10,9 +10,52 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Controller;
 use App\Models\HandInAssignment;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
+
 
 class ClassAssignmentController extends Controller
 {
+    public function ouput_file(Request $data)
+    {
+        $validator = Validator::make($data->all(), [
+            'assignment_id' => 'required|exists:assignments,id',
+        ], [
+            'required' => '欄位沒有填寫完整!',
+            'assignment_id.exists' => '作業不存在',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 402);
+        }
+        $assignment = Assignment::find($data->assignment_id);
+        if (
+            $assignment->getTeacherClass_Teacher_user_id() != Auth::user()->id &&
+            !$assignment->getTeacherClass_TA_user_ids()->contains(Auth::user()->id)
+        )
+            return response()->json(['error' => '權限不符，並非此課程教授、TA'], 402);
+        $class_name = $assignment->CodingClass->name;
+        $assignment_name = $assignment->name;
+
+        $zip_file = $class_name . '_' . $assignment_name . '.zip';
+        $zip = new \ZipArchive();
+        $zip->open($zip_file, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+
+        $path = public_path('uploads/assignment/' . $data->assignment_id);
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path));
+        foreach ($files as $name => $file) {
+            // We're skipping all subfolders
+            if (!$file->isDir()) {
+                $filePath     = $file->getRealPath();
+
+                // extracting filename with substr/strlen
+                $relativePath = $class_name . '_' . $assignment_name . '/' . substr($filePath, strlen($path) + 1);
+
+                $zip->addFile($filePath, $relativePath);
+            }
+        }
+        $zip->close();
+        $filename = basename($zip_file);
+        return response()->file($zip_file, ['filename' => urlencode($filename)])->deleteFileAfterSend();
+    }
     public function upload_file(Request $data)
     {
         $assignment = Assignment::find($data->assignment_id);
@@ -70,24 +113,32 @@ class ClassAssignmentController extends Controller
     public function get_hand_in_assignment(Request $data)
     {
         $validator = Validator::make($data->all(), [
-            'hand_in_assignment_id' => 'required|exists:hand_in_assignments,id',
+            'assignment_id' => 'required_without:hand_in_assignment_id|nullable|exists:assignments,id',
+            'hand_in_assignment_id' => 'required_without:assignment_id|nullable|exists:hand_in_assignments,id',
         ], [
-            'required' => '欄位沒有填寫完整!',
+            'assignment_id.exists' => '作業不存在',
             'hand_in_assignment_id.exists' => '繳交的作業不存在',
+            'required_without' => '請至少填入一欄'
         ]);
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 402);
         }
-        $handinassignment = HandInAssignment::find($data->hand_in_assignment_id);
-
+        if ($data->hand_in_assignment_id)
+            $assignment = HandInAssignment::find($data->hand_in_assignment_id)->Assignment;
+        else if ($data->assignment_id)
+            $assignment = Assignment::find($data->assignment_id);
         if (
-            $handinassignment->Assignment->getTeacherClass_Teacher_user_id() != Auth::user()->id &&
-            !$handinassignment->Assignment->getTeacherClass_TA_user_ids()->contains(Auth::user()->id) &&
-            !$handinassignment->Assignment->getUserClass_user_ids()->contains(Auth::user()->id)
+            $assignment->getTeacherClass_Teacher_user_id() != Auth::user()->id &&
+            !$assignment->getTeacherClass_TA_user_ids()->contains(Auth::user()->id) &&
+            !$assignment->getUserClass_user_ids()->contains(Auth::user()->id)
         )
             return response()->json(['error' => '權限不符，並非此課程教授、TA、學生'], 402);
 
-        $handinassignment = $handinassignment->fresh();
+        if ($data->hand_in_assignment_id)
+            $handinassignment = HandInAssignment::find($data->hand_in_assignment_id);
+        else if ($data->assignment_id) {
+            $handinassignment = Assignment::find($data->assignment_id)->HandInAssignment;
+        }
         return response()->json(['success' => $handinassignment], 200);
     }
 
@@ -130,6 +181,9 @@ class ClassAssignmentController extends Controller
             'file' => $data->file,
         ]);
 
+        if (!$data->post_id && $data->file == [])
+            $hand_in_assignment->delete();
+
         if ($hand_in_assignment->wasRecentlyCreated)
             return response()->json(['success' => '成功繳交作業'], 200);
         else
@@ -167,7 +221,9 @@ class ClassAssignmentController extends Controller
             $assignment->hand_in_assignment_id = Auth::user()->HandInAssignment->firstWhere('assignment_id', $data->assignment_id)?->id;
             $assignment->in_time = $now->isAfter($assignment->start_at) && $now->isBefore($assignment->end_at);
         } else {
-            $assignment->map(function ($item, $key) use ($now) {
+            $assignment->map(function ($item, $key) use ($now, $codingclass) {
+                if (Auth::user()->isadmin > 0)
+                    $item->hand_in_count =  $item->fresh()->HandInAssignment->count() . '/' . $codingclass->getUserClass_user_ids()->count();
                 $item->hand_in_assignment_id = Auth::user()->HandInAssignment->firstWhere('assignment_id', $item->id)?->id;
                 $item->in_time = $now->isAfter($item->start_at) && $now->isBefore($item->end_at);
                 return $item;
@@ -195,10 +251,13 @@ class ClassAssignmentController extends Controller
         if (CodingClass::find($data->coding_class_id)->getTeacherClass_Teacher_user_id() != Auth::user()->id)
             return response()->json(['error' => '權限不符，並非此課程教授'], 402);
 
+        if ($data->assignment_id)
+            $type = Assignment::find($data->assignment_id)->type;
+
         $match = ['id' => $data->assignment_id];
         $assignment = Assignment::updateOrCreate($match, [
             'coding_class_id' => $data->coding_class_id,
-            'type' => $data->type,
+            'type' => $data->assignment_id ? $type : $data->type,
             'name' => $data->name,
             'content' => $data->content,
             'start_at' => $data->start_at,
@@ -213,7 +272,9 @@ class ClassAssignmentController extends Controller
     {
         $validator = Validator::make($data->all(), [
             'assignment_id' => 'required|exists:assignments,id',
+            'check' => 'required'
         ], [
+            'check.required' => '未填入確認刪除字樣',
             'required' => '欄位沒有填寫完整!',
             'assignment_id.exists' => '作業不存在',
         ]);
@@ -223,7 +284,14 @@ class ClassAssignmentController extends Controller
         if (Assignment::find($data->assignment_id)->getTeacherClass_Teacher_user_id() != Auth::user()->id)
             return response()->json(['error' => '權限不符，並非此課程教授'], 402);
 
+        $assignment = Assignment::find($data->assignment_id);
+        if ($data->check != '確認刪除' . $assignment->name)
+            return response()->json(['error' => '確認字樣不同 請重新輸入'], 402);
+
+        Storage::deleteDirectory('uploads/assignment/' . $data->assignment_id);
+
         Assignment::find($data->assignment_id)->delete();
+
         return response()->json(['success' => '成功刪除作業'], 200);
     }
 }

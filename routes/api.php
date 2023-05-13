@@ -60,6 +60,7 @@ Route::prefix('class')->middleware('auth:api')->group(function () {
     Route::post('get_coding_class', [UserClassController::class, 'get_coding_class']);
 
     Route::prefix('admin')->middleware('isAdmin')->group(function () {
+        Route::post('ouput_file', [ClassAssignmentController::class, 'ouput_file']);
 
         Route::post('get_teacher_class', [TeacherClassController::class, 'get_teacher_class']);
         Route::post('teacher_class', [TeacherClassController::class, 'teacher_class']);
@@ -116,7 +117,7 @@ Route::prefix('forum')->group(function () {
 
 Route::get('sendmail', [PostController::class, 'post']);
 
-Route::prefix('test')->middleware('auth:api')->group(function () {
+Route::prefix('test')->group(function () {
     Route::post('test1', [TestController::class, 'test1']);
     Route::post('test2', [TestController::class, 'test2']);
     Route::get('test3', [TestController::class, 'test3']);
