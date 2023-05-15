@@ -13,10 +13,6 @@ use Illuminate\Support\Facades\Storage;
 
 class TeacherClassController extends Controller
 {
-
-    public function toggle_class(Request $data)
-    {
-    }
     public function get_teacher_class(Request $data)
     {
         $validator = Validator::make($data->all(), [
@@ -27,7 +23,7 @@ class TeacherClassController extends Controller
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 402);
         }
-        if ($data->coding_class_id) { //教授更新自己課程資料用
+        if ($data->coding_class_id) {
             $codingclass = CodingClass::find($data->coding_class_id);
             if ($codingclass->getTeacherClass_Teacher_user_id() != Auth::user()->id)
                 return response()->json(['error' => '權限不符，並非此課程教授'], 402);

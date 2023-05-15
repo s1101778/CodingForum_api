@@ -7,6 +7,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\Class\UserClassController;
 use App\Http\Controllers\Class\HandInAssignmentController;
 use App\Http\Controllers\Class\AssignmentController;
+use App\Http\Controllers\Class\TAController;
 use App\Http\Controllers\Class\TeacherClassController;
 use App\Http\Controllers\UvaController;
 use App\Http\Controllers\GetLikeController;
@@ -71,6 +72,11 @@ Route::prefix('class')->middleware('auth:api')->group(function () {
         Route::post('del_assignment', [AssignmentController::class, 'del_assignment']);
         Route::post('upload_file', [AssignmentController::class, 'upload_file']);
         Route::post('delete_file', [AssignmentController::class, 'delete_file']);
+    });
+    Route::prefix('TA')->middleware('isTA')->group(function () {
+        Route::post('ouput_file', [HandInAssignmentController::class, 'ouput_file']);
+
+        Route::post('get_TA_class', [TAController::class, 'get_TA_class']);
     });
 });
 

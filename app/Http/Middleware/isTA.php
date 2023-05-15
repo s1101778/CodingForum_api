@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 
-class isAdmin
+class isTA
 {
     /**
      * Handle an incoming request.
@@ -18,8 +18,8 @@ class isAdmin
     {
         $user = auth()->guard('api')->user();
 
-        if ($user && $user->isadmin != 1) {
-            return response()->json(['error' => '並非課程教授'], 401);
+        if ($user && $user->isadmin != 2) {
+            return response()->json(['error' => '並非課程TA'], 401);
         }
         return $next($request);
     }
