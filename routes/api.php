@@ -5,7 +5,8 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\Class\UserClassController;
-use App\Http\Controllers\Class\ClassAssignmentController;
+use App\Http\Controllers\Class\HandInAssignmentController;
+use App\Http\Controllers\Class\AssignmentController;
 use App\Http\Controllers\Class\TeacherClassController;
 use App\Http\Controllers\UvaController;
 use App\Http\Controllers\GetLikeController;
@@ -47,11 +48,11 @@ php artisan schedule:list
 
 Route::get('proxy/get_uva_pdf/{serial}', [UvaController::class, 'get_uva_pdf']);
 Route::prefix('class')->middleware('auth:api')->group(function () {
-    Route::post('upload_file', [ClassAssignmentController::class, 'upload_file']);
-    Route::post('delete_file', [ClassAssignmentController::class, 'delete_file']);
-    Route::post('get_hand_in_assignment', [ClassAssignmentController::class, 'get_hand_in_assignment']);
-    Route::post('hand_in_assignment', [ClassAssignmentController::class, 'hand_in_assignment']);
-    Route::post('get_assignment', [ClassAssignmentController::class, 'get_assignment']);
+    Route::post('upload_file', [HandInAssignmentController::class, 'upload_file']);
+    Route::post('delete_file', [HandInAssignmentController::class, 'delete_file']);
+    Route::post('get_hand_in_assignment', [HandInAssignmentController::class, 'get_hand_in_assignment']);
+    Route::post('hand_in_assignment', [HandInAssignmentController::class, 'hand_in_assignment']);
+    Route::post('get_assignment', [AssignmentController::class, 'get_assignment']);
 
     Route::post('get_user_class', [UserClassController::class, 'get_user_class']);
     Route::post('user_class', [UserClassController::class, 'user_class']);
@@ -60,14 +61,16 @@ Route::prefix('class')->middleware('auth:api')->group(function () {
     Route::post('get_coding_class', [UserClassController::class, 'get_coding_class']);
 
     Route::prefix('admin')->middleware('isAdmin')->group(function () {
-        Route::post('ouput_file', [ClassAssignmentController::class, 'ouput_file']);
+        Route::post('ouput_file', [HandInAssignmentController::class, 'ouput_file']);
 
         Route::post('get_teacher_class', [TeacherClassController::class, 'get_teacher_class']);
         Route::post('teacher_class', [TeacherClassController::class, 'teacher_class']);
         Route::post('del_teacher_class', [TeacherClassController::class, 'del_teacher_class']);
 
-        Route::post('assignment', [ClassAssignmentController::class, 'assignment']);
-        Route::post('del_assignment', [ClassAssignmentController::class, 'del_assignment']);
+        Route::post('assignment', [AssignmentController::class, 'assignment']);
+        Route::post('del_assignment', [AssignmentController::class, 'del_assignment']);
+        Route::post('upload_file', [AssignmentController::class, 'upload_file']);
+        Route::post('delete_file', [AssignmentController::class, 'delete_file']);
     });
 });
 
