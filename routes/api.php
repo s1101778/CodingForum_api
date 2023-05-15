@@ -63,6 +63,7 @@ Route::prefix('class')->middleware('auth:api')->group(function () {
 
     Route::prefix('admin')->middleware('isAdmin')->group(function () {
         Route::post('ouput_file', [HandInAssignmentController::class, 'ouput_file']);
+        Route::post('correct_hand_in_assignment', [HandInAssignmentController::class, 'correct_hand_in_assignment']);
 
         Route::post('get_teacher_class', [TeacherClassController::class, 'get_teacher_class']);
         Route::post('teacher_class', [TeacherClassController::class, 'teacher_class']);

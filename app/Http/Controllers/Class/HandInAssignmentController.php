@@ -189,4 +189,36 @@ class HandInAssignmentController extends Controller
         else
             return response()->json(['success' => '成功更新作業'], 200);
     }
+    public function correct_hand_in_assignment(Request $data)
+    {
+        $validator = Validator::make($data->all(), [
+            'assignment_id' => 'required|exists:assignments,id',
+            'user_id' => 'required|exists:users,id',
+        ], [
+            'required' => '欄位沒有填寫完整!',
+            'assignment_id.exists' => '作業不存在',
+            'user_id.exists' => '用戶不存在',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 402);
+        }
+        $assignment = Assignment::find($data->assignment_id);
+        if (
+            $assignment->getTeacherClass_Teacher_user_id() != Auth::user()->id &&
+            !$assignment->getTeacherClass_TA_user_ids()->contains(Auth::user()->id)
+        )
+            return response()->json(['error' => '權限不符，並非此課程教授、TA'], 402);
+
+        $hand_in_assignment = $assignment->HandInAssignment->where('user_id', $data->user_id)->first();
+        if (!$hand_in_assignment)
+            return response()->json(['error' => '此學生沒有修此課或尚未繳交作業'], 402);
+
+        if ($hand_in_assignment->status == 1) {
+            $hand_in_assignment->decrement('status');
+            return response()->json(['success' => '批改取消', 'status' => $hand_in_assignment->status], 200);
+        } else if ($hand_in_assignment->status == 0) {
+            $hand_in_assignment->increment('status');
+            return response()->json(['success' => '批改成功', 'status' => $hand_in_assignment->status], 200);
+        }
+    }
 }
