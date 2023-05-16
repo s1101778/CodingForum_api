@@ -22,10 +22,11 @@ class AuthController extends Controller
     {
         $validator = Validator::make($data->all(), [
             'name' => 'required',
-            'account' => 'required|unique:App\Models\User,account',
+            'account' => 'required|unique:App\Models\User,account|regex:/^s\d+$/',
             'email' => 'required|email|unique:App\Models\User,email',
             'password' => 'required',
         ], [
+            'account.regex' => '學號格式不對，小寫s開頭 後面接數字',
             'required' => '欄位沒有填寫完整!',
             'email.email' => '信箱格式錯誤',
             'account.unique' => '帳號已被使用',
@@ -40,8 +41,8 @@ class AuthController extends Controller
             'email' => $data->email,
             'password' => bcrypt($data->password),
             'remember_token' => Str::random(10),
-            'picture' => 'default_user.png',
-            'cover' => 'default_cover.jpeg',
+            'picture' => 'uploads/userpic/default_user.png',
+            'cover' => 'uploads/coverpic/default_cover.jpeg',
             'intro' => "Hello! I'm " . $data->name . "!"
         ]);
         $token = $user->createToken('Laravel9PassportAuth')->accessToken;
