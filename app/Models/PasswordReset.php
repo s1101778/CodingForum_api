@@ -11,10 +11,7 @@ class PasswordReset extends Model
     protected $primaryKey = 'email';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $casts = [
-        'created_at' => 'datetime:Y/m/d H:i:s',
-        'updated_at' => 'datetime:Y/m/d H:i:s',
-    ];
+    protected $casts = [];
     protected $fillable = [
         'email',
         'token',

@@ -10,8 +10,7 @@ class HandInAssignment extends Model
     use HasFactory;
     protected $guarded = [];
     protected $casts = [
-        'created_at' => 'datetime:Y/m/d H:i:s',
-        'updated_at' => 'datetime:Y/m/d H:i:s',
+
         'file' => 'array',
     ];
     public function Assignment()
@@ -22,8 +21,8 @@ class HandInAssignment extends Model
     {
         return $this->belongsTo(User::class);
     }
-    public function Post()
+    public function TempPost()
     {
-        return $this->belongsTo(Post::class);
+        return $this->belongsTo(TempPost::class);
     }
 }

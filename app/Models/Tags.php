@@ -9,10 +9,7 @@ class Tags extends Model
 {
     use HasFactory;
     protected $guarded = [];
-    protected $casts = [
-        'created_at' => 'datetime:Y/m/d H:i:s',
-        'updated_at' => 'datetime:Y/m/d H:i:s',
-    ];
+    protected $casts = [];
     public function Comment_User()
     {
         return $this->belongsTo(User::class, 'comment_user_id', 'id');

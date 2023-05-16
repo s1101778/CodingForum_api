@@ -8,10 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class CodingClass extends Model
 {
     protected $guarded = [];
-    protected $casts = [
-        'created_at' => 'datetime:Y/m/d H:i:s',
-        'updated_at' => 'datetime:Y/m/d H:i:s',
-    ];
+    protected $casts = [];
     use HasFactory;
     public function Assignment()
     {

@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Controller;
 use App\Models\HandInAssignment;
+use App\Models\Post;
+use App\Models\TempPost;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 
@@ -134,10 +136,14 @@ class HandInAssignmentController extends Controller
         )
             return response()->json(['error' => '權限不符，並非此課程教授、TA、學生'], 402);
 
-        if ($data->hand_in_assignment_id)
+        if ($data->hand_in_assignment_id) {
             $handinassignment = HandInAssignment::find($data->hand_in_assignment_id);
-        else if ($data->assignment_id) {
+            $handinassignment->post_id = $handinassignment->fresh()->TempPost->post_id;
+        } else if ($data->assignment_id) {
             $handinassignment = Assignment::find($data->assignment_id)->HandInAssignment;
+            $handinassignment->map(function ($item) {
+                return $item->post_id = $item->fresh()->TempPost->post_id;
+            });
         }
         return response()->json(['success' => $handinassignment], 200);
     }
@@ -169,25 +175,44 @@ class HandInAssignmentController extends Controller
         if ($data->post_id && Auth::user()->Post->pluck('id')->doesntContain($data->post_id))
             return response()->json(['error' => '此貼文並非您發布，請重新輸入'], 402);
 
-        if ($data->hand_in_assignment_id)
-            $match = ['id' => $data->hand_in_assignment_id];
-        else
-            $match = ['user_id' => Auth::user()->id, 'assignment_id' => $data->assignment_id];
+        $temppost = '';
+        $match = ['user_id' => Auth::user()->id, 'assignment_id' => $data->assignment_id];
+
+        if ($data->post_id) {
+            $post = Post::find($data->post_id);
+
+
+            $temppost = TempPost::updateOrCreate($match, [
+                'user_id' => Auth::user()->id,
+                'post_id' => $data->post_id,
+                'assignment_id' => $data->assignment_id,
+                'uva_topic_id' => $post->uva_topic_id,
+                'video_url' => $post->video_url,
+                'video_id' => $post->video_id,
+                'video_pic_url' => $post->video_pic_url,
+                'content' => $post->content,
+                'code' => $post->code,
+                'code_editor_type' => $post->code_editor_type,
+                'code_type' => $post->code_type
+            ]);
+        }
 
         $hand_in_assignment = HandInAssignment::updateOrCreate($match, [
             'user_id' => Auth::user()->id,
             'assignment_id' => $data->assignment_id,
-            'post_id' => $data->post_id,
+            'temp_post_id' => $temppost->id ?? '',
             'file' => $data->file,
         ]);
+
+
 
         if (!$data->post_id && $data->file == [])
             $hand_in_assignment->delete();
 
         if ($hand_in_assignment->wasRecentlyCreated)
-            return response()->json(['success' => '成功繳交作業'], 200);
+            return response()->json(['success' => '成功繳交作業', 'temp_post_id' => $temppost->id ?? ''], 200);
         else
-            return response()->json(['success' => '成功更新作業'], 200);
+            return response()->json(['success' => '成功更新作業', 'temp_post_id' => $temppost->id ?? ''], 200);
     }
     public function correct_hand_in_assignment(Request $data)
     {

@@ -120,6 +120,7 @@ Route::prefix('forum')->group(function () {
     });
     Route::get('get_uva', [UvaController::class, 'get_uva']);
     Route::post('get_post', [PostController::class, 'get_post']);
+    Route::post('get_temp_post', [PostController::class, 'get_temp_post']);
     Route::post('get_comment', [CommentController::class, 'get_comment']);
     Route::post('get_children_comment', [CommentController::class, 'get_children_comment']);
     Route::post('check_is_children_comment', [CommentController::class, 'check_is_children_comment']);

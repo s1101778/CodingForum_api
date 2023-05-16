@@ -9,10 +9,7 @@ class UserClass extends Model
 {
     protected $guarded = [];
 
-    protected $casts = [
-        'created_at' => 'datetime:Y/m/d H:i:s',
-        'updated_at' => 'datetime:Y/m/d H:i:s',
-    ];
+    protected $casts = [];
     protected $hidden = [
         'created_at',
         'updated_at'

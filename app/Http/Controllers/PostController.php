@@ -7,9 +7,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Models\UvaTopic;
 use App\Models\Post;
+use App\Models\TempPost;
 use App\Models\User;
 use App\Models\UserLike;
 use Illuminate\Support\Facades\Cache;
+use Carbon\Carbon;
 
 class PostController extends Controller
 {
@@ -239,6 +241,26 @@ class PostController extends Controller
             );
         }
         return response()->json(['success' => $posts], 200);
+    }
+    public function get_temp_post(Request $data)
+    {
+        $temp_post_id = $data->temp_post_id;
+        $validator = Validator::make($data->all(), [
+            'temp_post_id' => 'required|exists:temp_posts,id',
+        ], [
+            'required' => '欄位沒有填寫完整!',
+            'temp_post_id.exists' => 'temp貼文不存在',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 402);
+        }
+
+        $temp_post = TempPost::find($temp_post_id);
+        $temp_post->user_account = $temp_post->fresh()->User->account;
+        $temp_post->user_name = $temp_post->fresh()->User->name;
+        $temp_post->user_picture = $temp_post->fresh()->User->picture;
+        $temp_post->uva_topic = $temp_post->UvaTopic;
+        return response()->json(['success' => $temp_post], 200);
     }
     public function tidy_post($item)
     {
