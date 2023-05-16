@@ -173,6 +173,8 @@ class PostController extends Controller
             if ($user_account) {
                 $user_id = User::where('account', $user_account)->first()->id;
                 $posts = Post::where('user_id', $user_id)->get();
+                if ($serial)
+                    $posts = $posts->where('uva_topic_id', UvaTopic::firstWhere('serial', $serial)->id);
             } else {
                 if ($serial)
                     $posts = UvaTopic::where('serial', $serial)->first()->Post;
