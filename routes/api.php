@@ -60,6 +60,7 @@ Route::prefix('class')->middleware('auth:api')->group(function () {
     Route::post('del_user_class', [UserClassController::class, 'del_user_class']);
 
     Route::post('get_coding_class', [UserClassController::class, 'get_coding_class']);
+    Route::post('get_class_user', [UserClassController::class, 'get_class_user']);
 
     Route::prefix('admin')->middleware('isAdmin')->group(function () {
         Route::post('ouput_file', [HandInAssignmentController::class, 'ouput_file']);
