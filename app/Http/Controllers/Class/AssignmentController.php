@@ -90,14 +90,14 @@ class AssignmentController extends Controller
                 return response()->json(['error' => '此作業並非此課程'], 402);
 
             $assignment->hand_in_assignment_id = Auth::user()->HandInAssignment->firstWhere('assignment_id', $data->assignment_id)?->id;
-            $assignment->temp_post_id = Auth::user()->HandInAssignment->firstWhere('assignment_id', $data->assignment_id)?->TempPost->id;
+            $assignment->temp_post_id = Auth::user()->HandInAssignment->firstWhere('assignment_id', $data->assignment_id)?->TempPost?->id;
             $assignment->in_time = $now->isAfter($assignment->start_at) && $now->isBefore($assignment->end_at);
         } else {
             $assignment->map(function ($item, $key) use ($now, $codingclass) {
                 if (Auth::user()->isadmin > 0)
                     $item->hand_in_count =  $item->fresh()->HandInAssignment->count() . '/' . $codingclass->getUserClass_user_ids()->count();
                 $item->hand_in_assignment_id = Auth::user()->HandInAssignment->firstWhere('assignment_id', $item->id)?->id;
-                $item->temp_post_id = Auth::user()->HandInAssignment->firstWhere('assignment_id', $item->id)?->TempPost->id;
+                $item->temp_post_id = Auth::user()->HandInAssignment->firstWhere('assignment_id', $item->id)?->TempPost?->id;
 
                 $item->in_time = $now->isAfter($item->start_at) && $now->isBefore($item->end_at);
                 return $item;

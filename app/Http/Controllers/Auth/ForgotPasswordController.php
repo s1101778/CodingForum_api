@@ -52,7 +52,7 @@ class ForgotPasswordController extends Controller
     public function token_check(Request $request)
     {
         $data = Validator::make($request->all(), [
-            'token' => 'required|string|exists:password_resets',
+            'token' => 'required|string|exists:password_resets,token',
         ], [
             'required' => '欄位沒有填寫完整!',
             'token.exists' => '無此token',

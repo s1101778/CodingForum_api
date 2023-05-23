@@ -138,11 +138,11 @@ class HandInAssignmentController extends Controller
 
         if ($data->hand_in_assignment_id) {
             $handinassignment = HandInAssignment::find($data->hand_in_assignment_id);
-            $handinassignment->post_id = $handinassignment->fresh()->TempPost->post_id;
+            $handinassignment->post_id = $handinassignment->fresh()->TempPost?->post_id;
         } else if ($data->assignment_id) {
             $handinassignment = Assignment::find($data->assignment_id)->HandInAssignment;
             $handinassignment->map(function ($item) {
-                return $item->post_id = $item->fresh()->TempPost->post_id;
+                return $item->post_id = $item->fresh()->TempPost?->post_id;
             });
         }
         return response()->json(['success' => $handinassignment], 200);
@@ -200,7 +200,7 @@ class HandInAssignmentController extends Controller
         $hand_in_assignment = HandInAssignment::updateOrCreate($match, [
             'user_id' => Auth::user()->id,
             'assignment_id' => $data->assignment_id,
-            'temp_post_id' => $temppost->id ?? '',
+            'temp_post_id' => $temppost->id ?? null,
             'file' => $data->file,
         ]);
 

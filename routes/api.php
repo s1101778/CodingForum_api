@@ -109,6 +109,7 @@ Route::prefix('forum')->group(function () {
     });
     Route::middleware('auth:api')->group(function () {
         Route::post('post', [PostController::class, 'post']);
+        Route::post('get_user_post', [PostController::class, 'get_user_post']);
         Route::post('like_post', [PostController::class, 'like_post']);
         Route::post('del_post', [PostController::class, 'del_post']);
         Route::post('comment', [CommentController::class, 'comment']);

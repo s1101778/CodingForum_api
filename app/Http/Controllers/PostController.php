@@ -153,6 +153,17 @@ class PostController extends Controller
 
         return response()->json(['success' => '更新喜歡狀態成功', 'user_post_like' => $user_like?->dislike_or_like, 'now_post_like' => $now_post_like], 200);
     }
+    public function get_user_post(Request $data)
+    {
+        $posts = Auth::user()->post;
+        $posts = $posts->map(
+            function ($item, $key) {
+                return self::tidy_post($item);
+            }
+        );
+        return response()->json(['success' => $posts], 200);
+    }
+
     public function get_post(Request $data)
     {
         $post_id = $data->post_id;
