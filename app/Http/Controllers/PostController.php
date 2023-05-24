@@ -57,9 +57,32 @@ class PostController extends Controller
                     'code_type' => $data->code_type,
                     'code_editor_type' => $data->code_editor_type,
                 ]);
-                return response()->json(['success' => '成功更新貼文', 'post_id' => $data->post_id], 200);
+
+                $assignment = Auth::user()->UserClass->map->CodingClass->map->Assignment->flatten(1);
+                $now = Carbon::now();
+                $assignment_update = 0;
+                $assignment = $assignment->map(function ($item, $key) use ($now, $data, $video_id, $video_pic_url, &$assignment_update) {
+                    if ($now->isAfter($item->start_at) && $now->isBefore($item->end_at))
+                        if ($item->HandInAssignment?->map->TempPost?->map->post_id->first() == $data->post_id) {
+                            TempPost::where(['assignment_id' => $item->id, 'post_id' => $data->post_id])->first()->update([
+                                'uva_topic_id' => UvaTopic::get_uva_topic_id($data->serial),
+                                'video_url' => 'https://www.youtube.com/watch?v=' . $video_id,
+                                'video_id' => $video_id,
+                                'video_pic_url' => $video_pic_url,
+                                'content' => $data->content,
+                                'code' => $data->code,
+                                'code_type' => $data->code_type,
+                                'code_editor_type' => $data->code_editor_type,
+                            ]);
+                            $assignment_update = 1;
+                        }
+                });
+                if ($assignment_update == 1)
+                    return response()->json(['success' => '成功更新貼文 並更新在期限內且選擇此貼文之作業', 'post_id' => $data->post_id], 200);
+                else
+                    return response()->json(['success' => '成功更新貼文', 'post_id' => $data->post_id], 200);
             } else {
-                return response()->json(['error' => '權限不符'], 200);
+                return response()->json(['error' => '此貼文並非您發布，請重新輸入'], 200);
             }
         } else {
             $postlimit = Auth::user()->PostLimit->first();
