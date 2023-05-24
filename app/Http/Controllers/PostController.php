@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Models\UvaTopic;
 use App\Models\Post;
+use App\Models\PostLimit;
 use App\Models\TempPost;
 use App\Models\User;
 use App\Models\UserLike;
@@ -61,6 +62,14 @@ class PostController extends Controller
                 return response()->json(['error' => '權限不符'], 200);
             }
         } else {
+            $postlimit = Auth::user()->PostLimit->first();
+            if ($postlimit->exists()) {
+                $now = Carbon::now();
+                if ($now->isBefore($postlimit->end_at))
+                    return response()->json(['error' => "一分鐘內僅限發佈一則貼文"], 402);
+                else
+                    $postlimit->delete();
+            }
             $post = Post::create([  //添加POST
                 'user_id' => Auth::user()->id,
                 'uva_topic_id' => UvaTopic::get_uva_topic_id($data->serial),
@@ -71,6 +80,10 @@ class PostController extends Controller
                 'code' => $data->code,
                 'code_type' => $data->code_type,
                 'code_editor_type' => $data->code_editor_type,
+            ]);
+            PostLimit::create([
+                'user_id' => Auth::user()->id,
+                'end_at' => Carbon::now()->addMinutes(1)
             ]);
             return response()->json(['success' => '成功創立貼文', 'post_id' => $post->id], 200);
         }

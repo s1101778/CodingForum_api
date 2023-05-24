@@ -76,4 +76,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(HandInAssignment::class);
     }
+    public function PostLimit()
+    {
+        return $this->hasMany(PostLimit::class);
+    }
 }
