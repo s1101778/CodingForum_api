@@ -86,7 +86,7 @@ class PostController extends Controller
             }
         } else {
             $postlimit = Auth::user()->PostLimit->first();
-            if ($postlimit->exists()) {
+            if ($postlimit) {
                 $now = Carbon::now();
                 if ($now->isBefore($postlimit->end_at))
                     return response()->json(['error' => "一分鐘內僅限發佈一則貼文"], 402);
