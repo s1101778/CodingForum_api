@@ -47,7 +47,7 @@ class ForgotPasswordController extends Controller
             $message->from('root@bakerychu.com', '程式交流網');
             $message->to($email, $user)->subject('程式交流網-修改密碼通知');
         });
-        return response(['message' => "已成功發送修改密碼郵件"], 200);
+        return response(['success' => "已成功發送修改密碼郵件"], 200);
     }
     public function token_check(Request $request)
     {
@@ -62,10 +62,10 @@ class ForgotPasswordController extends Controller
         }
         $passwordReset = PasswordReset::firstWhere('token', $request->token);
         if ($passwordReset->created_at->addHour() < now()) {
-            PasswordReset::where('token', $request->token)->delete();
-            return response(['message' => "連結已過期，請重新申請重置密碼"], 403);
+            // PasswordReset::where('token', $request->token)->delete();
+            return response(['error' => "連結已過期，請重新申請重置密碼"], 403);
         }
-        return response(['message' => "token未過期"], 200);
+        return response(['success' => "token未過期"], 200);
     }
     public function check_reset_mail(Request $request)
     {
@@ -84,11 +84,11 @@ class ForgotPasswordController extends Controller
         $passwordReset = PasswordReset::firstWhere('token', $request->token);
         if ($passwordReset->created_at->addHour() < now()) {
             PasswordReset::where('token', $request->token)->delete();
-            return response(['message' => "連結已過期，請重新申請重置密碼"], 402);
+            return response(['error' => "連結已過期，請重新申請重置密碼"], 402);
         }
         User::firstWhere('email', $passwordReset->email)->update(['password' => bcrypt($request->password)]);
 
         $passwordReset->delete();
-        return response(['message' => "重置密碼成功"], 200);
+        return response(['success' => "重置密碼成功"], 200);
     }
 }
